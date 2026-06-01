@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Armonía III: Suite Projazz</title>
+  
+  <!-- Cargamos Tailwind CSS para los estilos -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Cargamos React y ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Cargamos Babel para que el navegador entienda el código de React (JSX) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: #0f172a; 
+      color: #f8fafc; 
+    }
+
+    /* Estilos del Pentagrama Interactivo */
+    .practice-staff-container {
+        position: relative;
+        width: 100%;
+        height: 220px;
+        background-color: #f8fafc;
+        border-radius: 0.75rem;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+        color: #0f172a;
+    }
+    @media (min-width: 768px) {
+        .practice-staff-container { height: 300px; }
+    }
+    .practice-staff-lines {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 0;
+    }
+    .practice-staff-row {
+        flex: 1;
+        position: relative;
+    }
+    .practice-staff-line {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #334155;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+    .practice-ledger-line {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 32px;
+        height: 2px;
+        background-color: #334155;
+        transform: translate(-50%, -50%);
+        z-index: 15;
+    }
+    .practice-responsive-staff-grid {
+        display: grid;
+        grid-template-columns: 50px repeat(8, 1fr);
+    }
+    @media (min-width: 768px) {
+        .practice-responsive-staff-grid { grid-template-columns: 80px repeat(8, 1fr); }
+    }
+    .practice-staff-grid {
+        position: absolute;
+        inset: 0;
+        padding: 20px 0;
+        z-index: 10;
+    }
+    .practice-clef-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 150px; 
+        line-height: 0; 
+        font-family: 'Times New Roman', serif; 
+        color: #334155;
+        user-select: none;
+        transform: translateY(-8px);
+        margin-left: 5px;
+    }
+    @media (min-width: 768px) {
+        .practice-clef-container {
+            font-size: 240px;
+            transform: translateY(-15px);
+            margin-left: 10px;
+        }
+    }
+    .practice-note-column {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .practice-note-cell {
+        flex: 1;
+        position: relative;
+    }
+    .practice-note-head {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 14px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%) rotate(-15deg);
+        z-index: 20;
+        box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .practice-accidental {
+        position: absolute;
+        top: 50%;
+        left: calc(50% - 12px); 
+        transform: translate(-100%, -50%); 
+        font-family: serif;
+        font-size: 1rem;
+        font-weight: bold;
+        color: #0f172a;
+        z-index: 20;
+    }
+    @media (min-width: 768px) {
+        .practice-accidental { left: calc(50% - 14px); font-size: 1.2rem; } 
+    }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // Extraemos las funciones que necesitamos de React global
+    const { useState, useMemo, useEffect } = React;
+
+    // --- ÍCONOS SVG INTEGADOS ---
+    const ArrowLeft = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>;
+    const Play = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+    const Music = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>;
+    const Piano = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 5h18v14H3z"></path><path d="M7 5v8"></path><path d="M11 5v8"></path><path d="M15 5v8"></path><path d="M19 5v8"></path></svg>;
+    const ChevronRight = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"></polyline></svg>;
+    const BrainCircuit = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 4.5a2.5 2.5 0 0 0-4.96-.46 2.5 2.5 0 0 0-1.98 3 2.5 2.5 0 0 0-1.32 4.24 3 3 0 0 0 .34 5.58 2.5 2.5 0 0 0 2.96 3.08 2.5 2.5 0 0 0 4.91.05L12 20V4.5Z"></path><path d="M16 8V5c0-1.1.9-2 2-2"></path><path d="M12 13h4"></path><path d="M12 18h6a2 2 0 0 1 2 2v1"></path><circle cx="18" cy="3" r="1"></circle><circle cx="16" cy="13" r="1"></circle><circle cx="20" cy="21" r="1"></circle></svg>;
+    const Calculator = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="16" y1="18" x2="16" y2="18.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line></svg>;
+
+    // ============================================================================
+    // --- MOTOR DE TEORÍA MUSICAL ---
+    // ============================================================================
+
+    const NOTE_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const SEMITONE_VALUES = { 'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11 };
+
+    // Tonalidades
+    const KEYS_MAYOR = ['Cb', 'C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+    const KEYS_MENOR = ['Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#'];
+
+    // Armaduras
+    const KEY_SIGNATURES_MAYOR = {
+      'C':  {},
+      'G':  { 'F': '#' },
+      'D':  { 'F': '#', 'C': '#' },
+      'A':  { 'F': '#', 'C': '#', 'G': '#' },
+      'E':  { 'F': '#', 'C': '#', 'G': '#', 'D': '#' },
+      'B':  { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#' },
+      'F#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#' },
+      'C#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#', 'B': '#' },
+      'F':  { 'B': 'b' },
+      'Bb': { 'B': 'b', 'E': 'b' },
+      'Eb': { 'B': 'b', 'E': 'b', 'A': 'b' },
+      'Ab': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b' },
+      'Db': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b' },
+      'Gb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b' },
+      'Cb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
+    };
+
+    const KEY_SIGNATURES_MENOR = {
+      'A':  {},
+      'E':  { 'F': '#' },
+      'B':  { 'F': '#', 'C': '#' },
+      'F#': { 'F': '#', 'C': '#', 'G': '#' },
+      'C#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#' },
+      'G#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#' },
+      'D#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#' },
+      'A#': { 'F': '#', 'C': '#', 'G': '#', 'D': '#', 'A': '#', 'E': '#' },
+      'D':  { 'B': 'b' },
+      'G':  { 'B': 'b', 'E': 'b' },
+      'C':  { 'B': 'b', 'E': 'b', 'A': 'b' },
+      'F':  { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b' },
+      'Bb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b' },
+      'Eb': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b' },
+      'Ab': { 'B': 'b', 'E': 'b', 'A': 'b', 'D': 'b', 'G': 'b', 'C': 'b', 'F': 'b' }
+    };
+
+    const SHARP_POS = { 'F': 30, 'C': 45, 'G': 25, 'D': 40, 'A': 55, 'E': 35, 'B': 50 };
+    const FLAT_POS = { 'B': 50, 'E': 35, 'A': 55, 'D': 40, 'G': 60, 'C': 45, 'F': 65 };
+
+    const INTERVAL_SPELLING = {
+      '1':   { semitones: 0,  degree: 0 },
+      'Sb2': { semitones: 1,  degree: 1 },
+      'Tb9': { semitones: 1,  degree: 1 },
+      'T9':  { semitones: 2,  degree: 1 },
+      'T#9': { semitones: 3,  degree: 1 }, 
+      'b3':  { semitones: 3,  degree: 2 },
+      '3':   { semitones: 4,  degree: 2 },
+      'S3':  { semitones: 4,  degree: 2 },
+      '4':   { semitones: 5,  degree: 3 },
+      'S4':  { semitones: 5,  degree: 3 },
+      'Sb4': { semitones: 4,  degree: 3 },
+      'T11': { semitones: 5,  degree: 3 },
+      'b5':  { semitones: 6,  degree: 4 }, 
+      'T#11':{ semitones: 6,  degree: 3 }, 
+      '5':   { semitones: 7,  degree: 4 },
+      '#5':  { semitones: 8,  degree: 4 },
+      'T#5': { semitones: 8,  degree: 4 },
+      'Sb6': { semitones: 8,  degree: 5 }, 
+      'Tb13':{ semitones: 8,  degree: 5 },
+      '6':   { semitones: 9,  degree: 5 },
+      'S6':  { semitones: 9,  degree: 5 },
+      'T13': { semitones: 9,  degree: 5 },
+      '°7':  { semitones: 9,  degree: 6 },
+      'b7':  { semitones: 10, degree: 6 },
+      'Sb7': { semitones: 10, degree: 6 },
+      '7':   { semitones: 11, degree: 6 },
+      '8':   { semitones: 12, degree: 0 } 
+    };
+
+    const getAccidentalValue = (accStr) => {
+      if (!accStr) return 0;
+      if (accStr === 'b') return -1;
+      if (accStr === '#') return 1;
+      if (accStr === 'bb') return -2;
+      if (accStr === 'x') return 2;
+      return 0;
+    };
+
+    const getNoteSemitone = (noteName) => {
+      if (!noteName || noteName === '?') return -1;
+      const letter = noteName.charAt(0);
+      const acc = noteName.slice(1);
+      if (SEMITONE_VALUES[letter] === undefined) return -1;
+      let val = SEMITONE_VALUES[letter] + getAccidentalValue(acc);
+      return (val + 120) % 12;
+    };
+
+    const getSpelledNote = (rootName, intervalSymbol) => {
+      const intervalData = INTERVAL_SPELLING[intervalSymbol];
+      if (!intervalData) return "?";
+      const rootLetter = rootName.charAt(0);
+      const rootAccidental = rootName.slice(1);
+      const rootValue = SEMITONE_VALUES[rootLetter] + getAccidentalValue(rootAccidental);
+      const rootLetterIndex = NOTE_LETTERS.indexOf(rootLetter);
+      const targetLetterIndex = (rootLetterIndex + intervalData.degree) % 7;
+      const targetLetter = NOTE_LETTERS[targetLetterIndex];
+      let targetTotalSemitones = rootValue + intervalData.semitones;
+      const targetNaturalValue = SEMITONE_VALUES[targetLetter];
+      let delta = (targetTotalSemitones - targetNaturalValue) % 12;
+      if (delta > 6) delta -= 12;
+      if (delta < -6) delta += 12;
+      let accidentalStr = "";
+      if (delta === 0) accidentalStr = "";
+      else if (delta === 1) accidentalStr = "#";
+      else if (delta === 2) accidentalStr = "x";
+      else if (delta === -1) accidentalStr = "b";
+      else if (delta === -2) accidentalStr = "bb";
+      else accidentalStr = "?";
+      return targetLetter + accidentalStr;
+    };
+
+    const getNoteType = (symbol) => {
+      if (symbol.startsWith('S')) return 'avoid';
+      if (symbol.startsWith('T')) return 'tension';
+      return 'chord';
+    };
+
+    const playPianoTone = (ctx, freq, startTime, duration) => {
+      const t = startTime;
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.value = freq;
+      const gain1 = ctx.createGain();
+      gain1.gain.setValueAtTime(0, t);
+      gain1.gain.linearRampToValueAtTime(0.6, t + 0.01); 
+      gain1.gain.exponentialRampToValueAtTime(0.01, t + duration); 
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'triangle';
+      osc2.frequency.value = freq; 
+      const gain2 = ctx.createGain();
+      gain2.gain.setValueAtTime(0, t);
+      gain2.gain.linearRampToValueAtTime(0.2, t + 0.01); 
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + duration * 0.8); 
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+
+      osc1.start(t);
+      osc1.stop(t + duration + 0.1);
+      osc2.start(t);
+      osc2.stop(t + duration + 0.1);
+    };
+
+    const playNotes = (notes) => {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const now = ctx.currentTime;
+      const C4_FREQ = 261.63; 
+      const rootSemitoneVal = getNoteSemitone(notes[0].note);
+      if (rootSemitoneVal === -1) return; 
+
+      notes.forEach((n, index) => {
+        const intervalInfo = INTERVAL_SPELLING[n.symbol];
+        if (!intervalInfo) return;
+        const semitoneFromRoot = intervalInfo.semitones;
+        let octaveShift = 0;
+        if (rootSemitoneVal > 7) octaveShift = -12; 
+        const absoluteSemitones = rootSemitoneVal + semitoneFromRoot + octaveShift;
+        const freq = C4_FREQ * Math.pow(2, absoluteSemitones / 12);
+        if (!isFinite(freq)) return;
+        playPianoTone(ctx, freq, now + index * 0.5, 1.2); 
+      });
+      setTimeout(() => { ctx.close(); }, notes.length * 500 + 1500);
+    };
+
+    // ============================================================================
+    // --- MÓDULO 1: GENERADOR DE ESCALAS ---
+    // ============================================================================
+
+    const GENERATOR_MAYOR_DATA = {
+      diatonic: {
+        title: "Funciones Diatónicas",
+        description: "Acordes propios de la tonalidad mayor seleccionada.",
+        options: [
+          { name: "I Grado (Jónico)", rootInterval: '1', chordQuality: 'Maj7', formula: ["1", "T9", "3", "S4", "5", "T13", "7"], details: "Evitar el 4º grado (S4)." },
+          { name: "II Grado (Dórico)", rootInterval: 'T9', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "S6", "b7"], details: "Evitar el 6º grado (S6) porque crea tritono con la 3ra." },
+          { name: "III Grado (Frigio)", rootInterval: '3', chordQuality: 'm7', formula: ["1", "Sb2", "b3", "T11", "5", "Sb6", "b7"], details: "Sb2 y Sb6 son notas a evitar." },
+          { name: "IV Grado (Lidio)", rootInterval: '4', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"], details: "No tiene notas a evitar. Característico #11." },
+          { name: "V Grado (Mixolidio)", rootInterval: '5', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"], details: "El 4º grado es la nota a evitar (S4)." },
+          { name: "VI Grado (Eolio)", rootInterval: 'S6', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "Sb6", "b7"], details: "La Sb6 es la nota a evitar." },
+          { name: "VII Grado (Locrio)", rootInterval: '7', chordQuality: 'm7b5', formula: ["1", "Sb2", "b3", "T11", "b5", "Sb6", "b7"], details: "Se evita Sb2 y Sb6. Nótese el uso de b5." }
+        ]
+      },
+      secondary: {
+        title: "Dominantes Secundarios",
+        description: "Dominantes que resuelven a grados diatónicos específicos de la tonalidad.",
+        options: [
+          { name: "V7/IV (Mixolidia)", rootInterval: '1', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"], details: "Dominante del IV grado (su fundamental es el grado I)." },
+          { name: "V7/V (Mixolidia)", rootInterval: 'T9', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"], details: "Dominante del V grado (su fundamental es el grado II)." },
+          { name: "V7/II (Mixolidia b13)", rootInterval: 'S6', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "Tb13", "b7"], details: "Dominante del II grado (su fundamental es el grado VI)." },
+          { name: "V7/III (Mixo b9 b13)", rootInterval: '7', chordQuality: '7', formula: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7"], details: "Dominante del III grado (su fundamental es el grado VII)." },
+          { name: "V7/VI (Mixo b9 b13)", rootInterval: '3', chordQuality: '7', formula: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7"], details: "Dominante del VI grado (su fundamental es el grado III)." }
+        ]
+      },
+      sustitutos: {
+        title: "Dominantes Sustitutos",
+        description: "Acordes que comparten tritono con el dominante original. Resuelven medio tono hacia abajo.",
+        options: [
+          { name: "subV7 (Lidia b7)", rootInterval: 'Sb2', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7. Resuelve medio tono descendente al I grado." },
+          { name: "subV7/II (Lidia b7)", rootInterval: 'b3', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7/II. Resuelve medio tono descendente al II grado." },
+          { name: "subV7/IV (Lidia b7)", rootInterval: 'b5', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7/IV. Resuelve medio tono descendente al IV grado." },
+          { name: "subV7/V (Lidia b7)", rootInterval: 'Sb6', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7/V. Resuelve medio tono descendente al V grado." }
+        ]
+      },
+      intercambio: {
+        title: "Intercambio Modal",
+        description: "Acordes prestados de tonalidades paralelas (generalmente del modo menor).",
+        options: [
+          { name: "bIImaj7 (Lidia)", rootInterval: 'Sb2', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"], details: "Acorde mayor sin fundamental diatónica. La cuarta aumentada genera conexión melódica." },
+          { name: "bIIImaj7 (Lidia)", rootInterval: 'b3', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"], details: "Acorde mayor de intercambio modal." },
+          { name: "bVImaj7 (Lidia)", rootInterval: 'Sb6', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"], details: "Acorde mayor de intercambio modal." },
+          { name: "bVIImaj7 (Lidia)", rootInterval: 'b7', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"], details: "Acorde mayor de intercambio modal." },
+          { name: "bVII7 (Lidia b7)", rootInterval: 'b7', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Intercambio modal dominante." },
+          { name: "Im7 (Dórica)", rootInterval: '1', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "T13", "b7"], details: "Acorde menor paralelo, utiliza Dórico." },
+          { name: "IVm6 (Dórica)", rootInterval: '4', chordQuality: 'm6', formula: ["1", "T9", "b3", "T11", "5", "6", "Sb7"], details: "La nota a evitar es la séptima (Sb7) porque está a medio tono de la 6ta mayor." },
+          { name: "IVm7 (Dórica)", rootInterval: '4', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "T13", "b7"], details: "Intercambio modal subdominante menor." },
+          { name: "Vm7 (Dórica)", rootInterval: '5', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "T13", "b7"], details: "Acorde menor paralelo, utiliza Dórico." },
+          { name: "IIm7b5 (Locria)", rootInterval: 'T9', chordQuality: 'm7b5', formula: ["1", "Sb2", "b3", "T11", "b5", "Sb6", "b7"], details: "Típico en progresiones IIm7b5 - V7(b9)." },
+          { name: "IIm7b5 (Locria ♮9)", rootInterval: 'T9', chordQuality: 'm7b5', formula: ["1", "T9", "b3", "T11", "b5", "Tb13", "b7"], details: "Para cadenciar directo al Imaj7. La 9na natural corresponde a la 3ra de la tonalidad." }
+        ]
+      },
+      optional: {
+        title: "Escalas Opcionales (para V7)",
+        description: "Variaciones armónicas aplicadas al Quinto Grado de la tonalidad seleccionada.",
+        options: [
+          { name: "Mixolidia (b9)", rootInterval: '5', chordQuality: '7(b9)', formula: ["1", "Tb9", "3", "S4", "5", "T13", "b7"], details: "Opción para V7." },
+          { name: "Mixolidia (b9, #9, b13)", rootInterval: '5', chordQuality: '7(b9,#9,b13)', formula: ["1", "Tb9", "T#9", "3", "S4", "5", "Tb13", "b7"], details: "Opción con más tensión. Usa enarmónicos de Jazz (#9 y 3)." },
+          { name: "Escala Alterada (Super Locria)", rootInterval: '5', chordQuality: '7alt', formula: ["1", "Tb9", "T#9", "3", "b5", "Tb13", "b7"], details: "Contiene b9, #9, b5 (#11) y b13. Sin notas a evitar." },
+          { name: "Escala Hexáfona (Tonos Enteros)", rootInterval: '5', chordQuality: '+7', formula: ["1", "T9", "3", "T#11", "T#5", "b7"], details: "Para acordes aumentados. Simétrica, sin notas a evitar." },
+          { name: "Dominante de 8 Notas", rootInterval: '5', chordQuality: '7(dim)', formula: ["1", "Tb9", "T#9", "3", "T#11", "5", "T13", "b7"], details: "Secuencia semitono-tono. Mezcla tensiones naturales y alteradas." }
+        ]
+      }
+    };
+
+    const GENERATOR_MINOR_DATA = {
+      diatonic: {
+        title: "Funciones Diatónicas",
+        description: "Acordes propios de la tonalidad menor seleccionada.",
+        options: [
+          { name: "Im6 (Dórica)", rootInterval: '1', chordQuality: 'm6', formula: ["1", "T9", "b3", "T11", "5", "6", "Sb7"], details: "Relación dórica, evitando el séptimo grado." },
+          { name: "Im7 (Eólica)", rootInterval: '1', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "Sb6", "b7"], details: "Relación eólica. La Sb6 es nota a evitar." },
+          { name: "ImMaj7 (Menor Melódica)", rootInterval: '1', chordQuality: 'mMaj7', formula: ["1", "T9", "b3", "T11", "5", "T13", "7"], details: "Relación menor melódica ascendente." },
+          { name: "IIm7b5 (Locria)", rootInterval: 'T9', chordQuality: 'm7b5', formula: ["1", "Sb2", "b3", "T11", "b5", "Sb6", "b7"], details: "Se evita Sb2 y Sb6." },
+          { name: "bIIImaj7 (Jónica)", rootInterval: 'b3', chordQuality: 'Maj7', formula: ["1", "T9", "3", "S4", "5", "T13", "7"], details: "Relación jónica." },
+          { name: "IVm7 (Dórica)", rootInterval: '4', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "T13", "b7"], details: "Relación dórica para el cuarto grado menor." },
+          { name: "Vm7 (Frigia)", rootInterval: '5', chordQuality: 'm7', formula: ["1", "Sb2", "b3", "T11", "5", "Sb6", "b7"], details: "Opción diatónica principal para Vm7." },
+          { name: "V7(b9) (Mixolidia b9 b13)", rootInterval: '5', chordQuality: '7(b9)', formula: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7"], details: "Dominante principal en modo menor." },
+          { name: "bVImaj7 (Lidia)", rootInterval: 'Sb6', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"], details: "Relación Lidia." },
+          { name: "bVII7 (Mixolidia)", rootInterval: 'b7', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"], details: "Relación mixolidia." },
+          { name: "VII°7 (Armónica Disminuida)", rootInterval: '7', chordQuality: '°7', formula: ["1", "Sb2", "b3", "Sb4", "b5", "Tb13", "°7"], details: "Séptimo grado de la menor armónica." }
+        ]
+      },
+      secondary: {
+        title: "Dominantes Secundarios",
+        description: "Dominantes que resuelven a grados diatónicos de la tonalidad menor.",
+        options: [
+          { name: "V7/IV (Mixolidia b13)", rootInterval: '1', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "Tb13", "b7"], details: "Dominante del IV grado." },
+          { name: "V7/V (Mixo b9 b13)", rootInterval: 'T9', chordQuality: '7', formula: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7"], details: "Dominante del V grado." },
+          { name: "V7/VI (Mixolidia)", rootInterval: 'b3', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"], details: "Dominante del bVI grado." },
+          { name: "V7/VII (Mixolidia)", rootInterval: '4', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"], details: "Dominante del bVII grado." }
+        ]
+      },
+      sustitutos: {
+        title: "Dominantes Sustitutos",
+        description: "Acordes que comparten tritono con el dominante original. Resuelven medio tono hacia abajo.",
+        options: [
+          { name: "subV7 (Lidia b7)", rootInterval: 'Sb2', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7. Resuelve medio tono descendente al Im." },
+          { name: "subV7/II (Lidia b7)", rootInterval: 'b3', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7/II. Resuelve medio tono descendente al IIm7b5." },
+          { name: "subV7/IV (Lidia b7)", rootInterval: 'b5', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7/IV. Resuelve medio tono descendente al IVm7." },
+          { name: "subV7/V (Lidia b7)", rootInterval: 'Sb6', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"], details: "Sustituto del V7/V. Resuelve medio tono descendente al V7(b9)." }
+        ]
+      }
+    };
+
+    const GENERATOR_NO_CENTER_DATA = {
+      todas: {
+        title: "Todas las Escalas",
+        options: [
+          { name: "Jónico", rootInterval: '1', chordQuality: 'Maj7', formula: ["1", "T9", "3", "S4", "5", "T13", "7"] },
+          { name: "Dórico", rootInterval: '1', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "S6", "b7"] },
+          { name: "Frigio", rootInterval: '1', chordQuality: 'm7', formula: ["1", "Sb2", "b3", "T11", "5", "Sb6", "b7"] },
+          { name: "Lidio", rootInterval: '1', chordQuality: 'Maj7', formula: ["1", "T9", "3", "T#11", "5", "T13", "7"] },
+          { name: "Mixolidio", rootInterval: '1', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "T13", "b7"] },
+          { name: "Eólico", rootInterval: '1', chordQuality: 'm7', formula: ["1", "T9", "b3", "T11", "5", "Sb6", "b7"] },
+          { name: "Locrio", rootInterval: '1', chordQuality: 'm7b5', formula: ["1", "Sb2", "b3", "T11", "b5", "Sb6", "b7"] },
+          { name: "Menor Armónica", rootInterval: '1', chordQuality: 'mMaj7', formula: ["1", "T9", "b3", "T11", "5", "Sb6", "7"] },
+          { name: "Menor Melódica", rootInterval: '1', chordQuality: 'mMaj7', formula: ["1", "T9", "b3", "T11", "5", "T13", "7"] },
+          { name: "Armónica Disminuida", rootInterval: '1', chordQuality: '°7', formula: ["1", "Sb2", "b3", "Sb4", "b5", "Tb13", "°7"] },
+          { name: "Lidia b7", rootInterval: '1', chordQuality: '7', formula: ["1", "T9", "3", "T#11", "5", "T13", "b7"] },
+          { name: "Mixolidia b13", rootInterval: '1', chordQuality: '7', formula: ["1", "T9", "3", "S4", "5", "Tb13", "b7"] },
+          { name: "Mixolidia b9 b13", rootInterval: '1', chordQuality: '7', formula: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7"] },
+          { name: "Mixolidia (b9)", rootInterval: '1', chordQuality: '7(b9)', formula: ["1", "Tb9", "3", "S4", "5", "T13", "b7"] },
+          { name: "Mixolidia (b9, #9, b13)", rootInterval: '1', chordQuality: '7(b9,#9,b13)', formula: ["1", "Tb9", "T#9", "3", "S4", "5", "Tb13", "b7"] },
+          { name: "Escala Alterada", rootInterval: '1', chordQuality: '7alt', formula: ["1", "Tb9", "T#9", "3", "b5", "Tb13", "b7"] },
+          { name: "Hexáfona (Tonos Enteros)", rootInterval: '1', chordQuality: '+7', formula: ["1", "T9", "3", "T#11", "T#5", "b7"] },
+          { name: "Dominante de 8 Notas", rootInterval: '1', chordQuality: '7(dim)', formula: ["1", "Tb9", "T#9", "3", "T#11", "5", "T13", "b7"] }
+        ]
+      }
+    };
+
+    const StaffDisplay = ({ keySigMap, notes }) => {
+      const staffWidth = 800;
+      const staffHeight = 140;
+      const sigLetters = Object.keys(keySigMap || {});
+      const isSharpKey = sigLetters.length > 0 && keySigMap[sigLetters[0]] === '#';
+      const BASE_Y = { 'C': 80, 'D': 75, 'E': 70, 'F': 65, 'G': 60, 'A': 55, 'B': 50 };
+      
+      let currentOctaveOffset = 0;
+      let previousLetterIndex = -1;
+
+      const renderedNotes = notes.map((n, i) => {
+        const letter = n.note.charAt(0);
+        const accidental = n.note.slice(1);
+        const letterIndex = NOTE_LETTERS.indexOf(letter);
+
+        if (i > 0 && letterIndex < previousLetterIndex) currentOctaveOffset -= 35; 
+        previousLetterIndex = letterIndex;
+
+        const y = BASE_Y[letter] + currentOctaveOffset;
+        const expectedAccidental = keySigMap[letter] || '';
+        let displayAccidental = null;
+        
+        if (accidental !== expectedAccidental) {
+          if (accidental === '') displayAccidental = '♮';
+          else if (accidental === 'b') displayAccidental = '♭';
+          else if (accidental === '#') displayAccidental = '♯';
+          else if (accidental === 'bb') displayAccidental = '𝄫';
+          else if (accidental === 'x') displayAccidental = '𝄪';
+        }
+        return { ...n, y, displayAccidental };
+      });
+
+      return (
+        <div className="w-full overflow-x-auto bg-[#f8fafc] rounded-xl shadow-inner border border-slate-700 p-4 flex justify-center mb-6">
+          <svg width={staffWidth} height={staffHeight} viewBox={`0 0 ${staffWidth} ${staffHeight}`} className="max-w-full h-auto">
+            {[30, 40, 50, 60, 70].map(y => (
+              <line key={y} x1="10" y1={y} x2={staffWidth - 10} y2={y} stroke="#1e293b" strokeWidth="1.5" />
+            ))}
+            <line x1="10" y1="30" x2="10" y2="70" stroke="#1e293b" strokeWidth="3" />
+            <line x1={staffWidth - 10} y1="30" x2={staffWidth - 10} y2="70" stroke="#1e293b" strokeWidth="3" />
+            <text x="15" y="83" fontSize="85" fontFamily="serif" fill="#1e293b">𝄞</text>
+
+            {sigLetters.map((letter, i) => {
+               const x = 70 + (i * 12);
+               const yPos = isSharpKey ? SHARP_POS[letter] : FLAT_POS[letter];
+               const symbol = isSharpKey ? '♯' : '♭';
+               return <text key={i} x={x} y={yPos + 5} fontSize="20" fontFamily="serif" fill="#1e293b" fontWeight="bold">{symbol}</text>;
+            })}
+
+            {renderedNotes.map((note, i) => {
+               const startX = 100 + (sigLetters.length * 12) + 20;
+               const spacing = (staffWidth - startX - 40) / (notes.length - 1);
+               const x = startX + (i * spacing);
+               const y = note.y;
+               const needsLedgerBottom = y >= 80;
+               const needsLedgerTop = y <= 20;
+
+               let color = "#3b82f6"; 
+               if (note.type === 'tension') color = "#10b981"; 
+               if (note.type === 'avoid') color = "#ef4444"; 
+
+               return (
+                 <g key={i}>
+                   {needsLedgerBottom && y >= 80 && <line x1={x-15} y1="80" x2={x+15} y2="80" stroke="#1e293b" strokeWidth="1.5" />}
+                   {needsLedgerBottom && y >= 90 && <line x1={x-15} y1="90" x2={x+15} y2="90" stroke="#1e293b" strokeWidth="1.5" />}
+                   {needsLedgerTop && y <= 20 && <line x1={x-15} y1="20" x2={x+15} y2="20" stroke="#1e293b" strokeWidth="1.5" />}
+                   {needsLedgerTop && y <= 10 && <line x1={x-15} y1="10" x2={x+15} y2="10" stroke="#1e293b" strokeWidth="1.5" />}
+                   {note.displayAccidental && (
+                     <text x={x - 14} y={y} fontSize="22" fontFamily="serif" fill="#1e293b" fontWeight="bold" dominantBaseline="central" textAnchor="end">{note.displayAccidental}</text>
+                   )}
+                   <ellipse cx={x} cy={y} rx="9" ry="6" transform={`rotate(-15 ${x} ${y})`} fill={color} />
+                 </g>
+               );
+            })}
+          </svg>
+        </div>
+      );
+    };
+
+    const PianoKey = ({ isBlack, highlightedType, label, isFirst, isAnchor }) => {
+      const baseClass = isBlack 
+        ? "h-24 w-8 -mx-4 z-10 rounded-b-md text-xs flex items-end justify-center pb-2 shadow-md shrink-0" 
+        : "h-36 w-10 border border-slate-700 rounded-b-md z-0 flex items-end justify-center pb-2 text-sm font-bold shadow-sm shrink-0";
+      const marginClass = (isFirst && isBlack) ? "ml-0 -mr-4" : (isBlack ? "-mx-4" : "");
+      let colorClass = isBlack ? "bg-slate-900 text-slate-100" : "bg-slate-100 text-slate-800";
+
+      if (highlightedType === 'chord') colorClass = "bg-blue-600 text-white border-blue-500";
+      else if (highlightedType === 'tension') colorClass = "bg-emerald-500 text-white border-emerald-400";
+      else if (highlightedType === 'avoid') colorClass = "bg-red-500 text-white border-red-400";
+
+      const displayLabel = label || (isAnchor && !highlightedType ? "C" : "");
+      const labelClass = isAnchor && !highlightedType ? "text-slate-400 font-normal" : "font-bold";
+
+      return (
+        <div className={`${baseClass} ${colorClass} ${marginClass} transition-colors duration-200 relative`}>
+           {displayLabel && <span className={`absolute bottom-2 text-[10px] opacity-90 ${labelClass}`}>{displayLabel}</span>}
+        </div>
+      );
+    };
+
+    const PianoDisplay = ({ activeNotes, root }) => {
+      const rootSemitone = getNoteSemitone(root);
+      if (rootSemitone === -1) return <div className="p-4 text-center text-red-500">Error en nota base</div>;
+      const totalKeys = 25; 
+      
+      const pianoKeys = Array.from({ length: totalKeys }, (_, i) => {
+        const semitoneVal = i % 12; 
+        const isBlack = [1, 3, 6, 8, 10].includes(semitoneVal);
+        const isAnchor = semitoneVal === 0 && !isBlack; 
+        return { absoluteIndex: i, semitone: semitoneVal, isBlack, isAnchor };
+      });
+
+      return (
+        <div className="flex justify-center items-start pt-4 pb-8 overflow-x-auto bg-slate-800/50 rounded-xl border border-slate-700 mb-4">
+          <div className="flex relative pl-4 pr-4"> 
+            {pianoKeys.map((k, idx) => {
+              let active = null;
+              if (idx >= rootSemitone && idx <= rootSemitone + 12) {
+                const semitonesFromRoot = idx - rootSemitone;
+                active = activeNotes.find(an => {
+                  const intervalInfo = INTERVAL_SPELLING[an.symbol];
+                  return intervalInfo && intervalInfo.semitones === semitonesFromRoot;
+                });
+              }
+              return (
+                <PianoKey 
+                  key={idx} 
+                  isFirst={idx === 0}
+                  isBlack={k.isBlack} 
+                  highlightedType={active?.type}
+                  label={active?.symbol}
+                  isAnchor={k.isAnchor}
+                />
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const NoteBadge = ({ symbol, note }) => {
+      const type = getNoteType(symbol);
+      
+      const colors = {
+        chord: "bg-blue-900/40 text-blue-300 border-blue-700/50",
+        tension: "bg-emerald-900/40 text-emerald-300 border-emerald-700/50",
+        avoid: "bg-red-900/40 text-red-300 border-red-700/50"
+      };
+      const labels = {
+        chord: "Nota del Acorde",
+        tension: "Tensión",
+        avoid: "Nota a Evitar (S)"
+      };
+      return (
+        <div className={`flex flex-col items-center p-3 w-20 md:w-24 rounded-xl border ${colors[type]} transition-all hover:scale-105 shadow-sm`}>
+          <span className="text-xs font-bold tracking-wider opacity-70 mb-1">{symbol}</span>
+          <span className="text-lg md:text-xl font-bold truncate w-full text-center">{note}</span>
+          <span className="text-[9px] uppercase mt-1 opacity-80 text-center leading-tight">{labels[type]}</span>
+        </div>
+      );
+    };
+
+    function ScaleGenerator({ onBack }) {
+      const [appMode, setAppMode] = useState(null); // 'mayor', 'menor', 'sin_centro'
+      const [keySignature, setKeySignature] = useState('C'); 
+      const [category, setCategory] = useState('diatonic');
+      const [selectedScaleIndex, setSelectedScaleIndex] = useState(0);
+
+      useEffect(() => {
+        if (appMode === 'mayor') {
+          setKeySignature('C');
+          setCategory('diatonic');
+          setSelectedScaleIndex(0);
+        } else if (appMode === 'menor') {
+          setKeySignature('A');
+          setCategory('diatonic');
+          setSelectedScaleIndex(0);
+        } else if (appMode === 'sin_centro') {
+          setKeySignature('C');
+          setCategory('todas');
+          setSelectedScaleIndex(0);
+        }
+      }, [appMode]);
+
+      const activeKeys = appMode === 'mayor' ? KEYS_MAYOR : (appMode === 'menor' ? KEYS_MENOR : KEYS_MAYOR);
+      const activeData = appMode === 'mayor' ? GENERATOR_MAYOR_DATA : (appMode === 'menor' ? GENERATOR_MINOR_DATA : GENERATOR_NO_CENTER_DATA);
+      const activeKeySignatures = appMode === 'mayor' ? KEY_SIGNATURES_MAYOR : KEY_SIGNATURES_MENOR;
+
+      const currentCategory = activeData[category] ? activeData[category] : activeData[Object.keys(activeData)[0]];
+      const currentScale = currentCategory.options[selectedScaleIndex] || currentCategory.options[0];
+
+      const actualRoot = useMemo(() => {
+        if (!appMode) return 'C';
+        return getSpelledNote(keySignature, currentScale.rootInterval);
+      }, [appMode, keySignature, currentScale]);
+
+      const calculatedNotes = useMemo(() => {
+        if (!appMode) return [];
+        const notes = currentScale.formula.map(symbol => ({
+          symbol,
+          note: getSpelledNote(actualRoot, symbol),
+          type: getNoteType(symbol)
+        }));
+        notes.push({ symbol: '8', note: actualRoot, type: 'chord' });
+        return notes;
+      }, [appMode, actualRoot, currentScale]);
+
+      const pianoActiveNotes = calculatedNotes.map(cn => ({
+        note: cn.note, type: cn.type, symbol: cn.symbol 
+      }));
+
+      if (!appMode) {
+        return (
+          <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col animate-in fade-in duration-500">
+            <header className="bg-slate-900 border-b border-slate-800 p-6 shadow-lg">
+              <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                    Armonía III: Generador de Escalas
+                  </h1>
+                  <p className="text-slate-400 text-sm mt-1">Calculadora Automática &bull; <span className="text-slate-300 font-medium">Profesor Marcelo Melipil J.</span></p>
+                </div>
+                <button onClick={onBack} className="text-slate-300 hover:text-white flex items-center gap-2 transition-colors">
+                  <ArrowLeft className="w-5 h-5" /> Volver al menú principal
+                </button>
+              </div>
+            </header>
+
+            <section className="flex-grow flex flex-col items-center justify-center py-12 px-4">
+                <div className="bg-slate-800 rounded-2xl p-8 md:p-12 shadow-2xl border border-slate-700 text-center w-full max-w-lg">
+                    <h2 className="text-3xl font-extrabold text-white mb-2">Elige tu opción</h2>
+                    <p className="text-slate-400 mb-8">Selecciona qué tipo de análisis deseas calcular hoy.</p>
+                    <div className="flex flex-col gap-4">
+                        <button onClick={() => setAppMode('mayor')} className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-6 py-5 rounded-xl font-bold transition-all shadow-lg text-xl flex items-center justify-center gap-3">
+                            <Play className="w-5 h-5 fill-current" /> Modo Mayor
+                        </button>
+                        <button onClick={() => setAppMode('menor')} className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white px-6 py-5 rounded-xl font-bold transition-all shadow-lg text-xl flex items-center justify-center gap-3">
+                            <Play className="w-5 h-5 fill-current" /> Modo Menor
+                        </button>
+                        <button onClick={() => setAppMode('sin_centro')} className="bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 text-white px-6 py-5 rounded-xl font-bold transition-all shadow-lg text-xl flex items-center justify-center gap-3">
+                            <Play className="w-5 h-5 fill-current" /> Sin Centro Tonal
+                        </button>
+                    </div>
+                </div>
+            </section>
+          </div>
+        );
+      }
+
+      const currentKeySig = appMode === 'sin_centro' ? {} : activeKeySignatures[keySignature];
+
+      return (
+        <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col animate-in fade-in duration-500">
+          <header className="bg-slate-900 border-b border-slate-800 p-6 shadow-lg">
+            <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                  Armonía III: Generador de Escalas
+                </h1>
+                <p className="text-slate-400 text-sm mt-1">
+                  Calculadora Automática &bull; <span className="text-slate-300 font-medium">Profesor Marcelo Melipil J.</span>
+                </p>
+              </div>
+              <button onClick={() => setAppMode(null)} className="text-slate-300 hover:text-white flex items-center gap-2 transition-colors">
+                <ArrowLeft className="w-5 h-5" /> Volver al menú de selección
+              </button>
+            </div>
+          </header>
+
+          <main className="flex-grow max-w-4xl mx-auto w-full p-4 md:p-6 space-y-6">
+            <div className="grid md:grid-cols-12 gap-6">
+              <div className="md:col-span-4 lg:col-span-3 bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-4">
+                  1. {appMode === 'sin_centro' ? 'Fundamental' : `Tonalidad ${appMode === 'mayor' ? 'Mayor' : 'Menor'}`}
+                </label>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {activeKeys.map(note => (
+                    <button
+                      key={note}
+                      onClick={() => setKeySignature(note)}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-bold rounded-xl transition-all ${
+                        keySignature === note 
+                          ? 'bg-cyan-600 text-white shadow-md shadow-cyan-900/50 transform scale-110 ring-2 ring-cyan-400' 
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600'
+                      }`}
+                    >{note}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="md:col-span-8 lg:col-span-9 bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex flex-col">
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-4">
+                  2. {appMode === 'sin_centro' ? 'Escala' : 'Función Armónica'}
+                </label>
+                
+                {appMode !== 'sin_centro' && (
+                  <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-700 pb-4">
+                    {Object.entries(activeData).map(([key, data]) => (
+                      <button
+                        key={key}
+                        onClick={() => { setCategory(key); setSelectedScaleIndex(0); }}
+                        className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${
+                          category === key || (!activeData[category] && key === Object.keys(activeData)[0])
+                            ? 'bg-cyan-900/50 text-cyan-300 ring-2 ring-cyan-500' 
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        {(category === key || (!activeData[category] && key === Object.keys(activeData)[0])) && <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />}
+                        {data.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {currentCategory.options.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedScaleIndex(idx)}
+                      className={`text-left p-3 rounded-xl border text-sm transition-all ${
+                        selectedScaleIndex === idx 
+                          ? 'border-cyan-500 bg-cyan-900/30 text-white shadow-inner' 
+                          : 'border-slate-600 bg-slate-700/50 hover:border-cyan-400/50 text-slate-300'
+                      }`}
+                    >
+                      <div className="font-bold">{opt.name}</div>
+                      <div className={`text-xs mt-1 truncate ${selectedScaleIndex === idx ? 'text-cyan-200' : 'text-slate-400'}`}>
+                        {opt.formula.join(" ")}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+              <div className="p-6 md:p-8 border-b border-slate-700">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-2 block">
+                      {appMode === 'sin_centro' ? 'Sin Centro Tonal' : `Tonalidad de ${keySignature} ${appMode === 'mayor' ? 'Mayor' : 'Menor'}`}
+                    </span>
+                    <h2 className="text-3xl font-extrabold text-white flex flex-wrap items-center gap-3">
+                      <span className="text-cyan-300 bg-cyan-900/30 px-3 py-1 rounded-lg border border-cyan-800/50">
+                        {actualRoot}{currentScale.chordQuality}
+                      </span> 
+                      <span className="text-2xl font-bold opacity-80 text-slate-300">
+                        ({currentScale.name.split(' (')[1]?.replace(')', '') || currentScale.name})
+                      </span>
+                    </h2>
+                  </div>
+                  <div className="text-right flex items-center gap-3">
+                     <button onClick={() => playNotes(calculatedNotes)} className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95">
+                      <Play className="w-5 h-5 fill-current" /> Escuchar
+                    </button>
+                  </div>
+                </div>
+                {appMode !== 'sin_centro' && (
+                  <p className="mt-6 text-sm text-slate-300 bg-slate-900/50 p-4 rounded-xl border-l-4 border-cyan-500 shadow-inner leading-relaxed">
+                    <span className="font-semibold text-cyan-400 mr-2">Descripción:</span>
+                    {currentScale.details}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-6 md:p-8 flex flex-col items-center">
+                
+                <div className="w-full max-w-4xl mb-8">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <Music className="w-4 h-4" /> Notación Musical
+                  </h3>
+                  <StaffDisplay keySigMap={currentKeySig} notes={calculatedNotes} />
+                </div>
+                
+                <div className="flex flex-wrap justify-center gap-3 mb-10 w-full max-w-4xl">
+                  {calculatedNotes.map((item, idx) => (
+                    <div key={idx} className="flex items-center">
+                      <NoteBadge symbol={item.symbol} note={item.note} />
+                      {idx < calculatedNotes.length - 1 && <ChevronRight className="w-4 h-4 text-slate-600 mx-1 hidden sm:block" />}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="w-full max-w-4xl">
+                   <div className="flex justify-between items-center mb-4 px-2">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2"><Piano className="w-4 h-4" /> Visualización en Teclado</h3>
+                      <div className="flex gap-4 text-xs font-medium">
+                        <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]"></div> Acorde</span>
+                        <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div> Tensión</span>
+                        <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div> Evitar</span>
+                      </div>
+                   </div>
+                   <PianoDisplay activeNotes={pianoActiveNotes} root={actualRoot} />
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // --- MÓDULO 2: PRÁCTICA DE ARMONÍA ---
+    // ============================================================================
+
+    // Generador dinámico de retos basado en la teoría
+    const generateChallengesForKey = (key, mode, filters = { includeSecondary: false, includeSustitutos: false, includeModal: false }) => {
+        const { includeSecondary, includeSustitutos, includeModal } = filters;
+        const data = mode === 'mayor' ? GENERATOR_MAYOR_DATA : GENERATOR_MINOR_DATA;
+        let challenges = [];
+
+        const LETTER_TO_ROW = { 'C': 14, 'D': 13, 'E': 12, 'F': 11, 'G': 10, 'A': 16, 'B': 15 };
+
+        const processCategory = (catOptions, categoryName) => {
+            catOptions.forEach(opt => {
+                const rootNote = getSpelledNote(key, opt.rootInterval); 
+                if (rootNote === '?') return; 
+
+                const rootLetter = rootNote.charAt(0);
+                const rootRow = LETTER_TO_ROW[rootLetter]; 
+
+                let solucion = [];
+                let notasTextArr = [];
+                const formulaWithOctave = [...opt.formula, '8'];
+
+                formulaWithOctave.forEach((interval, i) => {
+                    const currentNote = getSpelledNote(rootNote, interval); 
+                    const currentLetter = currentNote.charAt(0);
+                    const currentAcc = currentNote.slice(1);
+                    
+                    const currentRow = rootRow - i;
+
+                    solucion.push({ row: currentRow, acc: currentAcc });
+                    
+                    let accDisplay = currentAcc.replace('b', '♭').replace('#', '♯');
+                    if (currentAcc === 'bb') accDisplay = '♭♭';
+                    if (currentAcc === 'x') accDisplay = '𝄪'; 
+                    notasTextArr.push(currentLetter + accDisplay);
+                });
+
+                let titleName = opt.name;
+                if (opt.name.includes(" Grado (")) {
+                    const parts = opt.name.split(" Grado ("); 
+                    titleName = `${parts[1].replace(')', '')} (${parts[0]})`;
+                } else if (opt.name.includes(" (")) {
+                    const parts = opt.name.split(" (");
+                    titleName = `${parts[1].replace(')', '')} (${parts[0]})`;
+                }
+
+                challenges.push({
+                    titulo: `${rootNote} ${titleName}`,
+                    notasText: notasTextArr.join(" - "),
+                    solucion: solucion,
+                    rootRow: rootRow,
+                    formula: formulaWithOctave,
+                    category: categoryName
+                });
+            });
+        };
+
+        if (data.diatonic) processCategory(data.diatonic.options, 'diatonic');
+        if (includeSecondary && data.secondary) processCategory(data.secondary.options, 'secondary');
+        if (includeSustitutos && data.sustitutos) processCategory(data.sustitutos.options, 'sustitutos');
+        if (includeModal && data.intercambio) processCategory(data.intercambio.options, 'intercambio');
+
+        return challenges;
+    };
+
+    const nomenclaturasMayor = [
+      { nombre: "Jónica (I)", grados: ["1", "T9", "3", "S4", "5", "T13", "7", "1"] },
+      { nombre: "Dórica (IIm)", grados: ["1", "T9", "b3", "T11", "5", "S6", "b7", "1"] },
+      { nombre: "Frigia (IIIm)", grados: ["1", "Sb2", "b3", "T11", "5", "Sb6", "b7", "1"] },
+      { nombre: "Lidia (IV)", grados: ["1", "T9", "3", "T#11", "5", "T13", "7", "1"] },
+      { nombre: "Mixolidia (V7) (V7/IV) (V7/V)", grados: ["1", "T9", "3", "S4", "5", "T13", "b7", "1"] },
+      { nombre: "Mixolidio (V7sus4)", grados: ["1", "T9", "S3", "4", "5", "T13", "b7", "1"] },
+      { nombre: "Eólica (VIm)", grados: ["1", "T9", "b3", "T11", "5", "Sb6", "b7", "1"] },
+      { nombre: "Locria (VIIm7b5)", grados: ["1", "Sb2", "b3", "T11", "b5", "Sb6", "b7", "1"] },
+      { nombre: "Mixolidia b13 (V7/II)", grados: ["1", "T9", "3", "S4", "5", "Tb13", "b7", "1"] },
+      { nombre: "Mixolidia b9 b13 (V7/III) (V7/VI)", grados: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7", "1"] },
+      { nombre: "Lidia b7 (subV7) (subV7/II) (subV7/IV) (subV7/V)", grados: ["1", "T9", "3", "T#11", "5", "T13", "b7", "1"] }
+    ];
+
+    const nomenclaturasMenor = [
+      { nombre: "Eólica (Im7)", grados: ["1", "T9", "b3", "T11", "5", "Sb6", "b7", "1"] },
+      { nombre: "Dórica (Im6)", grados: ["1", "T9", "b3", "T11", "5", "6", "Sb7", "1"] },
+      { nombre: "Menor Melódica (ImMaj7)", grados: ["1", "T9", "b3", "T11", "5", "T13", "7", "1"] },
+      { nombre: "Locria (IIm7b5)", grados: ["1", "Sb2", "b3", "T11", "b5", "Sb6", "b7", "1"] },
+      { nombre: "Jónica (bIIImaj7)", grados: ["1", "T9", "3", "S4", "5", "T13", "7", "1"] },
+      { nombre: "Dórica (IVm7)", grados: ["1", "T9", "b3", "T11", "5", "T13", "b7", "1"] },
+      { nombre: "Mixolidia b9 b13 (V7(b9))", grados: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7", "1"] },
+      { nombre: "Frigia (Vm7)", grados: ["1", "Sb2", "b3", "T11", "5", "Sb6", "b7", "1"] },
+      { nombre: "Lidia (bVImaj7)", grados: ["1", "T9", "3", "T#11", "5", "T13", "7", "1"] },
+      { nombre: "Mixolidia (bVII7)", grados: ["1", "T9", "3", "S4", "5", "T13", "b7", "1"] },
+      { nombre: "Armónica Disminuida (VII°7)", grados: ["1", "Sb2", "b3", "Sb4", "b5", "Tb13", "°7", "1"] },
+      { nombre: "Mixolidia b13 (V7/IV)", grados: ["1", "T9", "3", "S4", "5", "Tb13", "b7", "1"] },
+      { nombre: "Mixolidia b9 b13 (V7/V)", grados: ["1", "Tb9", "3", "S4", "5", "Tb13", "b7", "1"] },
+      { nombre: "Mixolidia (V7/VI) (V7/VII)", grados: ["1", "T9", "3", "S4", "5", "T13", "b7", "1"] },
+      { nombre: "Lidia b7 (subV7) (subV7/II) (subV7/IV) (subV7/V)", grados: ["1", "T9", "3", "T#11", "5", "T13", "b7", "1"] }
+    ];
+
+    const opcionesPorCasilla = [
+      ["1"],                                   
+      ["-", "Sb2", "T9", "Tb9", "T#9"],           
+      ["-", "b3", "3", "S3"],                    
+      ["-", "4", "S4", "Sb4", "T11", "T#11"],    
+      ["-", "b5", "5", "#5"],                    
+      ["-", "Sb6", "6", "S6", "Tb13", "T13"],    
+      ["-", "°7", "b7", "Sb7", "7"],             
+      ["1"]                                      
+    ];
+
+    const rowToMidiAudio = {
+      16: 57, 15: 59, 14: 60, 13: 62, 12: 64, 11: 65, 10: 67, 9: 69,
+      8: 71, 7: 72, 6: 74, 5: 76, 4: 77, 3: 79, 2: 81, 1: 83, 0: 84
+    };
+
+    function HarmonyPractice({ onBack }) {
+      const [appMode, setAppMode] = useState(null); 
+      const [currentTab, setCurrentTab] = useState('nom'); 
+      
+      const [nomStats, setNomStats] = useState({ correct: 0, total: 0 });
+      const [pentStats, setPentStats] = useState({ correct: 0, total: 0 });
+
+      const [selectedPracticeKey, setSelectedPracticeKey] = useState('Aleatorio');
+      const [includeSecondary, setIncludeSecondary] = useState(false);
+      const [includeSustitutos, setIncludeSustitutos] = useState(false);
+      const [includeModal, setIncludeModal] = useState(false);
+
+      const activeNomenclaturas = appMode === 'mayor' ? nomenclaturasMayor : nomenclaturasMenor;
+      const activeKeys = appMode === 'mayor' ? KEYS_MAYOR : KEYS_MENOR;
+
+      const [currentNomIndex, setCurrentNomIndex] = useState(0);
+      const [nomSelections, setNomSelections] = useState(["1", "-", "-", "-", "-", "-", "-", "1"]);
+      const [nomValidation, setNomValidation] = useState(Array(8).fill(null));
+      const [nomFeedback, setNomFeedback] = useState({ visible: false, message: '', type: '' });
+
+      const [currentPentChallenge, setCurrentPentChallenge] = useState(null);
+      const [recentCategories, setRecentCategories] = useState([]); // Memoria de categorías
+      const [staffState, setStaffState] = useState(Array(8).fill({ row: 0, acc: '' }));
+      const [pentValidation, setPentValidation] = useState(Array(8).fill(null)); 
+      const [pentFeedback, setPentFeedback] = useState({ visible: false, message: '', type: '' });
+
+      useEffect(() => {
+        if (appMode) {
+          setNomStats({ correct: 0, total: 0 });
+          setPentStats({ correct: 0, total: 0 });
+          setSelectedPracticeKey('Aleatorio');
+          setIncludeSecondary(false);
+          setIncludeSustitutos(false);
+          setIncludeModal(false);
+          setRecentCategories([]); // Reiniciamos la memoria al cambiar de modo
+          handleNextNom();
+          handleNextPent('Aleatorio', false, false, false);
+        }
+      }, [appMode]);
+
+      const handleNextNom = () => {
+        if (!activeNomenclaturas || activeNomenclaturas.length === 0) return;
+        const nextIdx = Math.floor(Math.random() * activeNomenclaturas.length);
+        setCurrentNomIndex(nextIdx);
+        setNomSelections(["1", "-", "-", "-", "-", "-", "-", "1"]);
+        setNomValidation(Array(8).fill(null));
+        setNomFeedback({ visible: false, message: '', type: '' });
+      };
+
+      const checkNomenclatura = () => {
+        const expected = activeNomenclaturas[currentNomIndex].grados;
+        let allCorrect = true;
+        let newValidation = [...nomValidation];
+
+        for (let i = 0; i < 8; i++) {
+            if (nomSelections[i] === expected[i]) {
+                newValidation[i] = 'correct';
+            } else {
+                newValidation[i] = 'error';
+                allCorrect = false;
+            }
+        }
+        setNomValidation(newValidation);
+
+        if (allCorrect) {
+            setNomFeedback({ visible: true, message: '¡Excelente! Respuesta perfecta.', type: 'success' });
+            setNomStats(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
+        } else {
+            const formulaStr = expected.filter(e => e !== '-').join(' - ');
+            setNomFeedback({ visible: true, message: `Hay errores. La respuesta correcta es: ${formulaStr}`, type: 'error' });
+            setNomStats(prev => ({ ...prev, total: prev.total + 1 }));
+        }
+      };
+
+      const handleNextPent = (overrideKey, overrideSec, overrideSust, overrideMod) => {
+        const keyToUse = overrideKey !== undefined ? overrideKey : selectedPracticeKey;
+        const useSec = overrideSec !== undefined ? overrideSec : includeSecondary;
+        const useSust = overrideSust !== undefined ? overrideSust : includeSustitutos;
+        const useMod = overrideMod !== undefined ? overrideMod : includeModal;
+        
+        let targetKey = keyToUse;
+        if (keyToUse === 'Aleatorio') {
+            targetKey = activeKeys[Math.floor(Math.random() * activeKeys.length)];
+        }
+
+        const retosForKey = generateChallengesForKey(targetKey, appMode, { includeSecondary: useSec, includeSustitutos: useSust, includeModal: useMod });
+        
+        if (retosForKey.length === 0) return;
+
+        // --- SISTEMA ANTI-REPETICIÓN DE CATEGORÍAS (Máximo 2 seguidas) ---
+        let validRetos = retosForKey;
+        if (recentCategories.length >= 2 && recentCategories[0] === recentCategories[1]) {
+            const blockedCategory = recentCategories[0];
+            // Filtramos las escalas que NO sean de la categoría bloqueada
+            const alternativeRetos = retosForKey.filter(r => r.category !== blockedCategory);
+            // Solo aplicamos el filtro si hay otras opciones disponibles
+            if (alternativeRetos.length > 0) {
+                validRetos = alternativeRetos;
+            }
+        }
+
+        let nextChallenge;
+        if (validRetos.length > 1 && currentPentChallenge) {
+            do {
+                nextChallenge = validRetos[Math.floor(Math.random() * validRetos.length)];
+            } while (nextChallenge.titulo === currentPentChallenge.titulo);
+        } else {
+            nextChallenge = validRetos[Math.floor(Math.random() * validRetos.length)];
+        }
+
+        // Actualizamos la memoria para el próximo turno
+        setRecentCategories(prev => {
+            const newHist = [...prev, nextChallenge.category];
+            if (newHist.length > 2) newHist.shift(); // Mantiene solo las últimas 2
+            return newHist;
+        });
+        
+        setCurrentPentChallenge(nextChallenge);
+        
+        let newStaffState = [];
+        for(let i=0; i<8; i++) {
+            newStaffState.push({ row: nextChallenge.rootRow - i, acc: '' });
+        }
+        setStaffState(newStaffState);
+        setPentValidation(Array(8).fill(null));
+        setPentFeedback({ visible: false, message: '', type: '' });
+      };
+
+      const handleKeyChange = (newKey) => {
+        setSelectedPracticeKey(newKey);
+        handleNextPent(newKey);
+      };
+
+      const cycleAccidental = (colIndex) => {
+        const currentAcc = staffState[colIndex].acc;
+        let nextAcc = '';
+        if (currentAcc === '') nextAcc = '#';
+        else if (currentAcc === '#') nextAcc = 'b';
+        else if (currentAcc === 'b') nextAcc = 'x';
+        else if (currentAcc === 'x') nextAcc = 'bb';
+        else if (currentAcc === 'bb') nextAcc = ''; 
+        
+        const newStaffState = [...staffState];
+        newStaffState[colIndex] = { ...newStaffState[colIndex], acc: nextAcc };
+        setStaffState(newStaffState);
+      };
+
+      const checkPentagrama = () => {
+        const expected = currentPentChallenge.solucion;
+        let allCorrect = true;
+        let newValidation = [...pentValidation];
+
+        for (let i = 0; i < 8; i++) {
+            if (staffState[i].acc === expected[i].acc) {
+                newValidation[i] = 'correct';
+            } else {
+                newValidation[i] = 'error';
+                allCorrect = false;
+            }
+        }
+        setPentValidation(newValidation);
+
+        if (allCorrect) {
+            setPentFeedback({ visible: true, message: '¡Perfecto! Has escrito la escala correctamente.', type: 'success' });
+            setPentStats(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
+        } else {
+            const notasCorrectas = currentPentChallenge.notasText;
+            setPentFeedback({ visible: true, message: `Hay errores. Las notas correctas son: ${notasCorrectas}`, type: 'error' });
+            setPentStats(prev => ({ ...prev, total: prev.total + 1 }));
+        }
+      };
+
+      const playNomenclaturaSeq = () => {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+        
+        const expected = activeNomenclaturas[currentNomIndex].grados;
+        let hasUserNotes = nomSelections.some((val, i) => i !== 0 && i !== 7 && val !== '-');
+        const notasA_Reproducir = hasUserNotes ? nomSelections : expected;
+        
+        const degreeToSemitone = {
+          "1": 0, "Sb2": 1, "Tb9": 1, "T9": 2, "T#9": 3, "b3": 3, "3": 4, "S3": 4,
+          "4": 5, "S4": 5, "Sb4": 5, "T11": 5, "T#11": 6, "b5": 6, "5": 7, "#5": 8, "Sb6": 8, "Tb13": 8,
+          "6": 9, "S6": 9, "T13": 9, "°7": 9, "b7": 10, "Sb7": 10, "7": 11
+        };
+
+        notasA_Reproducir.forEach((grado, index) => {
+            if (grado !== '-') {
+                let semitone = degreeToSemitone[grado];
+                if (index === 7 && grado === "1") semitone = 12; 
+                if (semitone !== undefined) {
+                    const freq = 440 * Math.pow(2, ((60 + semitone) - 69) / 12);
+                    playPianoTone(ctx, freq, now + index * 0.4, 0.5);
+                }
+            }
+        });
+        setTimeout(() => { ctx.close(); }, 8 * 400 + 1000);
+      };
+
+      const playPentagramaSeq = () => {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+
+        let hasNotes = staffState.some(n => n.acc !== '');
+        const notasA_Reproducir = hasNotes ? staffState : currentPentChallenge.solucion;
+
+        notasA_Reproducir.forEach((note, index) => {
+            if (note) {
+                let r = note.row !== undefined ? note.row : note.r;
+                let acc = note.acc !== undefined ? note.acc : note.a;
+                let midi = rowToMidiAudio[r];
+                if (acc === '#') midi += 1;
+                if (acc === 'b') midi -= 1;
+                if (acc === 'bb') midi -= 2;
+                if (acc === 'x') midi += 2;
+                
+                const freq = 440 * Math.pow(2, (midi - 69) / 12);
+                playPianoTone(ctx, freq, now + index * 0.4, 0.5);
+            }
+        });
+        setTimeout(() => { ctx.close(); }, 8 * 400 + 1000);
+      };
+
+
+      if (!appMode) {
+        return (
+          <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col animate-in fade-in duration-500">
+            <header className="bg-slate-900 border-b border-slate-800 p-6 shadow-lg">
+              <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                    Armonía III: Estudio de Escalas
+                  </h1>
+                  <p className="text-slate-400 text-sm mt-1">Evaluación de Escala/Acorde &bull; <span className="text-slate-300 font-medium">Profesor Marcelo Melipil J.</span></p>
+                </div>
+                <button onClick={onBack} className="text-slate-300 hover:text-white flex items-center gap-2 transition-colors">
+                  <ArrowLeft className="w-5 h-5" /> Volver al menú principal
+                </button>
+              </div>
+            </header>
+
+            <section className="flex-grow flex flex-col items-center justify-center py-12 px-4">
+                <div className="bg-slate-800 rounded-2xl p-8 md:p-12 shadow-2xl border border-slate-700 text-center w-full max-w-lg">
+                    <h2 className="text-3xl font-extrabold text-white mb-2">Elige tu práctica</h2>
+                    <p className="text-slate-400 mb-8">Selecciona la tonalidad que deseas estudiar hoy.</p>
+                    <div className="flex flex-col gap-4">
+                        <button onClick={() => setAppMode('mayor')} className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-6 py-5 rounded-xl font-bold transition-all shadow-lg text-xl flex items-center justify-center gap-3">
+                            <Play className="w-5 h-5 fill-current" /> Modo Mayor
+                        </button>
+                        <button onClick={() => setAppMode('menor')} className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white px-6 py-5 rounded-xl font-bold transition-all shadow-lg text-xl flex items-center justify-center gap-3">
+                            <Play className="w-5 h-5 fill-current" /> Modo Menor
+                        </button>
+                    </div>
+                </div>
+            </section>
+          </div>
+        );
+      }
+
+      const isNom = currentTab === 'nom';
+      const retoPent = currentPentChallenge || { titulo: '', formula: [] };
+      const formulaPent = retoPent.formula || [];
+
+      return (
+        <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col animate-in fade-in duration-500">
+          <header className="bg-slate-900 border-b border-slate-800 p-6 shadow-lg">
+              <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div>
+                      <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                          Armonía III: Modo {appMode === 'mayor' ? 'Mayor' : 'Menor'}
+                      </h1>
+                      <p className="text-slate-400 text-sm mt-1">Práctica Interactiva &bull; <span className="text-slate-300 font-medium">Profesor Marcelo Melipil J.</span></p>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                      <button onClick={() => setAppMode(null)} className="text-slate-300 hover:text-white flex items-center gap-2 transition-colors">
+                          <ArrowLeft className="w-5 h-5" /> Volver al menú de selección
+                      </button>
+                      <div className="flex bg-slate-800 rounded-lg p-1">
+                          <button onClick={() => setCurrentTab('nom')} className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${isNom ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Nomenclatura</button>
+                          <button onClick={() => setCurrentTab('pent')} className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${!isNom ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Pentagrama</button>
+                      </div>
+                  </div>
+              </div>
+          </header>
+
+          <main className="flex-grow max-w-4xl mx-auto w-full p-4 md:p-6">
+            {/* === TAB NOMENCLATURA === */}
+            {isNom && (
+              <section className="block animate-in fade-in">
+                <div className="bg-slate-800 rounded-2xl p-6 md:p-8 shadow-xl border border-slate-700">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold text-white">Relación escala/acorde</h2>
+                        <span className="bg-slate-700 text-cyan-300 text-xs px-3 py-1 rounded-full font-mono">{nomStats.correct}/{nomStats.total} correctas</span>
+                    </div>
+                    
+                    <p className="text-slate-300 mb-6">Selecciona los grados, tensiones (T) y notas a evitar (S) para construir la siguiente escala:</p>
+                    
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-6 border border-slate-700/50 mb-8">
+                        <h3 className="text-2xl md:text-3xl font-extrabold text-center text-cyan-400 mb-8">
+                          {activeNomenclaturas[currentNomIndex]?.nombre}
+                        </h3>
+                        
+                        <div className="grid grid-cols-4 md:grid-cols-8 gap-2 md:gap-3">
+                          {opcionesPorCasilla.map((opciones, i) => {
+                            const isLocked = i === 0 || i === 7;
+                            let extraClass = "border-slate-600 bg-slate-800 focus:border-cyan-400";
+                            if (nomValidation[i] === 'correct') extraClass = "border-emerald-500 bg-emerald-900/30 text-emerald-300";
+                            if (nomValidation[i] === 'error') extraClass = "border-red-500 bg-red-900/30 text-red-300";
+                            if (isLocked) extraClass = "border-slate-600/50 bg-slate-700/50 text-slate-400 cursor-not-allowed";
+
+                            return (
+                              <select 
+                                key={i}
+                                value={nomSelections[i]}
+                                disabled={isLocked}
+                                onChange={(e) => {
+                                  const newSels = [...nomSelections];
+                                  newSels[i] = e.target.value;
+                                  setNomSelections(newSels);
+                                }}
+                                className={`w-full font-mono text-center border-2 rounded-lg p-2 md:p-3 appearance-none focus:outline-none shadow-inner ${extraClass} ${!isLocked ? 'text-white cursor-pointer' : ''}`}
+                              >
+                                {opciones.map(op => <option key={op} value={op}>{op}</option>)}
+                              </select>
+                            );
+                          })}
+                        </div>
+                    </div>
+
+                    {nomFeedback.visible && (
+                      <div className={`mb-6 p-4 rounded-lg text-center font-semibold text-lg border-2 ${
+                        nomFeedback.type === 'success' ? 'bg-emerald-900/30 border-emerald-500 text-emerald-300' : 'bg-red-900/30 border-red-500 text-red-300'
+                      }`}>
+                        {nomFeedback.message}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div className="flex flex-1 gap-2">
+                            <button onClick={checkNomenclatura} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-lg font-bold transition-colors shadow-lg shadow-emerald-600/20 text-sm md:text-base">
+                                Comprobar
+                            </button>
+                            <button onClick={playNomenclaturaSeq} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-lg font-bold transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 text-sm md:text-base">
+                                <span>🔊</span> <span className="hidden sm:inline">Reproducir</span>
+                            </button>
+                        </div>
+                        <button onClick={handleNextNom} className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base border border-slate-600">
+                            Siguiente ➔
+                        </button>
+                    </div>
+                </div>
+              </section>
+            )}
+
+            {/* === TAB PENTAGRAMA === */}
+            {!isNom && (
+              <section className="block animate-in fade-in">
+                <div className="bg-slate-800 rounded-2xl p-6 md:p-8 shadow-xl border border-slate-700">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <div>
+                            <h2 className="text-xl font-bold text-white">Escritura Musical</h2>
+                            <p className="text-slate-400 text-sm mt-1">Dibuja la escala solicitada en el pentagrama.</p>
+                        </div>
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <label className="text-sm text-slate-300 font-semibold whitespace-nowrap">Tonalidad:</label>
+                            <select 
+                                value={selectedPracticeKey} 
+                                onChange={(e) => handleKeyChange(e.target.value)}
+                                className="bg-slate-700 text-white text-sm rounded-lg px-3 py-2 outline-none border border-slate-600 focus:border-cyan-400 w-full md:w-auto cursor-pointer"
+                            >
+                                <option value="Aleatorio">Aleatorio</option>
+                                {activeKeys.map(k => <option key={k} value={k}>{k}</option>)}
+                            </select>
+                            <span className="bg-slate-700 text-blue-300 text-xs px-3 py-2 rounded-lg font-mono whitespace-nowrap border border-slate-600">{pentStats.correct}/{pentStats.total} correctas</span>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-slate-900/40 rounded-xl border border-slate-700/50">
+                        <span className="text-xs font-semibold text-slate-400 mr-2 uppercase tracking-wider">Filtros:</span>
+                        <button
+                            onClick={() => {
+                                const newVal = !includeSecondary;
+                                setIncludeSecondary(newVal);
+                                handleNextPent(undefined, newVal, undefined, undefined);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                includeSecondary ? 'bg-cyan-600 text-white border-cyan-500 shadow-[0_0_8px_rgba(8,145,178,0.6)]' : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-500'
+                            }`}
+                        >
+                            Dominantes Secundarios
+                        </button>
+                        
+                        <button
+                            onClick={() => {
+                                const newVal = !includeSustitutos;
+                                setIncludeSustitutos(newVal);
+                                handleNextPent(undefined, undefined, newVal, undefined);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                includeSustitutos ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_8px_rgba(79,70,229,0.6)]' : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-500'
+                            }`}
+                        >
+                            Dominantes Sustitutos
+                        </button>
+
+                        {appMode === 'mayor' && (
+                            <button
+                                onClick={() => {
+                                    const newVal = !includeModal;
+                                    setIncludeModal(newVal);
+                                    handleNextPent(undefined, undefined, undefined, newVal);
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                    includeModal ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_0_8px_rgba(5,150,105,0.6)]' : 'bg-slate-800 text-slate-400 border-slate-600 hover:border-slate-500'
+                                }`}
+                            >
+                                Intercambio Modal
+                            </button>
+                        )}
+                    </div>
+
+                    <p className="text-sm text-cyan-400 mb-6 font-semibold">💡 Tip: Las notas base ya están ubicadas. Toca la columna de una nota o usa los menús de abajo para asignar la alteración que corresponda (♯, ♭, x, ♭♭).</p>
+                    
+                    <div className="bg-slate-900/50 rounded-xl p-4 md:p-6 border border-slate-700/50 mb-8">
+                        <h3 className="text-2xl font-extrabold text-center text-blue-400 mb-6">
+                          {retoPent.titulo}
+                        </h3>
+                        
+                        <div className="practice-staff-container">
+                            <div className="practice-staff-lines">
+                                {[...Array(17)].map((_, i) => (
+                                    <div key={i} className="practice-staff-row">
+                                      {[4, 6, 8, 10, 12].includes(i) && <div className="practice-staff-line"></div>}
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="practice-staff-grid practice-responsive-staff-grid">
+                                <div className="practice-clef-container">𝄞</div>
+                                {[...Array(8)].map((_, colIdx) => (
+                                  <div key={colIdx} onClick={() => cycleAccidental(colIdx)} className="practice-note-column cursor-pointer hover:bg-cyan-500/10 transition-colors rounded">
+                                    {[...Array(17)].map((_, rowIdx) => {
+                                      const isActive = staffState[colIdx] && staffState[colIdx].row === rowIdx;
+                                      
+                                      // Determinar el color según la función de la nota
+                                      let noteColorClass = "bg-slate-500"; 
+                                      let accColorClass = "text-slate-200";
+                                      if (formulaPent[colIdx]) {
+                                          const type = getNoteType(formulaPent[colIdx]);
+                                          if (type === 'chord') { noteColorClass = "bg-blue-500"; accColorClass = "text-blue-400"; }
+                                          else if (type === 'tension') { noteColorClass = "bg-emerald-500"; accColorClass = "text-emerald-400"; }
+                                          else if (type === 'avoid') { noteColorClass = "bg-red-500"; accColorClass = "text-red-400"; }
+                                      }
+
+                                      return (
+                                        <div key={rowIdx} className="practice-note-cell">
+                                          {isActive && (
+                                            <>
+                                              {rowIdx === 14 && <div className="practice-ledger-line"></div>}
+                                              {rowIdx === 15 && <div className="practice-ledger-line" style={{top: '-50%'}}></div>}
+                                              {rowIdx === 16 && <><div className="practice-ledger-line"></div><div className="practice-ledger-line" style={{top: '-150%'}}></div></>}
+                                              {rowIdx === 2 && <div className="practice-ledger-line"></div>}
+                                              {rowIdx === 1 && <div className="practice-ledger-line" style={{top: '150%'}}></div>}
+                                              {rowIdx === 0 && <><div className="practice-ledger-line"></div><div className="practice-ledger-line" style={{top: '250%'}}></div></>}
+                                              
+                                              <div className={`practice-note-head ${noteColorClass}`}></div>
+                                              
+                                              {staffState[colIdx].acc && (
+                                                <div className={`practice-accidental ${staffState[colIdx].acc === 'bb' ? 'practice-double-flat' : ''} ${accColorClass}`}>
+                                                  {staffState[colIdx].acc === '#' ? '♯' : staffState[colIdx].acc === 'b' ? '♭' : staffState[colIdx].acc === 'bb' ? '♭♭' : staffState[colIdx].acc === 'x' ? 'x' : ''}
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="practice-responsive-staff-grid gap-1 md:gap-2 mt-4 items-center">
+                            <div></div>
+                            {[...Array(8)].map((_, i) => {
+                              let extraClass = "border-slate-600 bg-slate-800 focus:border-cyan-400";
+                              if (pentValidation[i] === 'correct') extraClass = "border-emerald-500 bg-emerald-900/30 text-emerald-300";
+                              if (pentValidation[i] === 'error') extraClass = "border-red-500 bg-red-900/30 text-red-300";
+
+                              return (
+                                <select 
+                                  key={i}
+                                  value={staffState[i].acc}
+                                  onChange={(e) => {
+                                    const newStaffState = [...staffState];
+                                    newStaffState[i].acc = e.target.value;
+                                    setStaffState(newStaffState);
+                                  }}
+                                  className={`w-full text-white font-mono text-center border-2 rounded-lg p-1 md:p-2 appearance-none focus:outline-none cursor-pointer shadow-inner text-sm md:text-base ${extraClass}`}
+                                >
+                                    <option value="">-</option>
+                                    <option value="#">♯</option>
+                                    <option value="b">♭</option>
+                                    <option value="x">x</option>
+                                    <option value="bb">♭♭</option>
+                                </select>
+                              );
+                            })}
+                        </div>
+
+                        <div className="practice-responsive-staff-grid gap-1 md:gap-2 mt-2 text-center font-mono text-[9px] sm:text-[10px] md:text-sm font-bold items-center">
+                            <div></div>
+                            {formulaPent.map((grado, idx) => {
+                              const type = getNoteType(grado);
+                              let colorClass = "";
+                              
+                              if (type === 'chord') colorClass = "bg-blue-900/40 text-blue-300 border-blue-700/50";
+                              else if (type === 'tension') colorClass = "bg-emerald-900/40 text-emerald-300 border-emerald-700/50";
+                              else if (type === 'avoid') colorClass = "bg-red-900/40 text-red-300 border-red-700/50";
+                              
+                              return (
+                                <div key={idx} className={`${colorClass} py-1.5 rounded-lg border shadow-inner flex items-center justify-center h-full`}>
+                                  {grado}
+                                </div>
+                              );
+                            })}
+                        </div>
+                    </div>
+
+                    {pentFeedback.visible && (
+                      <div className={`mb-6 p-4 rounded-lg text-center font-semibold text-lg border-2 ${
+                        pentFeedback.type === 'success' ? 'bg-emerald-900/30 border-emerald-500 text-emerald-300' : 'bg-red-900/30 border-red-500 text-red-300'
+                      }`}>
+                        {pentFeedback.message}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div className="flex flex-1 gap-2">
+                            <button onClick={checkPentagrama} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-lg font-bold transition-colors shadow-lg shadow-emerald-600/20 text-sm md:text-base">
+                                Comprobar
+                            </button>
+                            <button onClick={playPentagramaSeq} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-lg font-bold transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 text-sm md:text-base" title="Reproducir las notas">
+                                <span>🔊</span> <span className="hidden sm:inline">Reproducir</span>
+                            </button>
+                        </div>
+                        <button onClick={() => handleNextPent()} className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold transition-colors text-sm md:text-base border border-slate-600">
+                            Siguiente ➔
+                        </button>
+                    </div>
+                </div>
+              </section>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    function App() {
+      const [currentView, setCurrentView] = useState('home'); 
+
+      if (currentView === 'generator') {
+        return (
+          <ScaleGenerator onBack={() => setCurrentView('home')} />
+        );
+      }
+
+      if (currentView === 'practice') {
+        return (
+          <HarmonyPractice onBack={() => setCurrentView('home')} />
+        );
+      }
+
+      return (
+          <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col items-center justify-center p-4 animate-in fade-in duration-500">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 border border-slate-700 text-cyan-400 mb-6 shadow-xl">
+                <Music className="w-10 h-10" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-4">
+                Armonía III: Relación Escala/Acorde
+              </h1>
+              <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+                Selecciona una herramienta para comenzar tu sesión de estudio musical.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl">
+              <button 
+                onClick={() => setCurrentView('practice')}
+                className="group text-left bg-slate-800 p-8 rounded-3xl shadow-xl hover:shadow-2xl border border-slate-700 hover:border-emerald-500 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
+                  <BrainCircuit className="w-32 h-32 text-emerald-500" />
+                </div>
+                <div className="w-14 h-14 bg-slate-900 border border-slate-700 text-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                  <BrainCircuit className="w-7 h-7" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Estudio de Escalas</h2>
+                <p className="text-slate-400 mb-6 min-h-[48px]">
+                  Pon a prueba tus conocimientos entrenando con ejercicios interactivos en modo mayor y menor.
+                </p>
+                <div className="flex items-center text-emerald-400 font-bold text-sm">
+                  Iniciar Estudio <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+
+              <button 
+                onClick={() => setCurrentView('generator')}
+                className="group text-left bg-slate-800 p-8 rounded-3xl shadow-xl hover:shadow-2xl border border-slate-700 hover:border-cyan-500 transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
+                  <Calculator className="w-32 h-32 text-cyan-500" />
+                </div>
+                <div className="w-14 h-14 bg-slate-900 border border-slate-700 text-cyan-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                  <Calculator className="w-7 h-7" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Generador de Escalas</h2>
+                <p className="text-slate-400 mb-6 min-h-[48px]">
+                  Calcula la relación escala/acorde para los grados diatónicos de cualquier tonalidad.
+                </p>
+                <div className="flex items-center text-cyan-400 font-bold text-sm">
+                  Abrir Calculadora <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            </div>
+
+            <footer className="mt-16 text-slate-500 text-sm text-center">
+              <strong className="text-slate-400">Profesor Marcelo Melipil J.</strong>
+            </footer>
+          </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
