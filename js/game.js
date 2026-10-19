@@ -496,9 +496,10 @@ async function startRealPractice() {
 // ─── Control de saltos ───────────────────────────────────────────────────────
 // Máximo intervalo permitido por dificultad (en semitonos).
 const MAX_LEAP = { basic: 5, normal: 9, intermediate: 9, advanced: 14 };
-// Probabilidad de que se permita un salto mayor como excepción expresiva.
-// Solo se evalúa cuando ya hay candidatos dentro del rango — no es un OR con vacío.
-const LEAP_CHANCE = 0.02; // 2 % de las veces
+// En avanzado se permite ocasionalmente un salto algo mayor (+4st sobre el límite).
+// En básico y normal el límite es estricto — sin excepciones.
+const LEAP_EXTRA   = 4;   // semitonos adicionales en la excepción expresiva
+const LEAP_CHANCE  = 0.04; // probabilidad de excepción (solo dificultad advanced)
 
 /**
  * Selecciona la siguiente nota aplicando:
@@ -525,10 +526,13 @@ function selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourB
         candidates = activePool.filter(n => n.midi !== lastMidi);
     }
 
-    // Excepción expresiva: con baja probabilidad abrir a salto mayor.
-    // Solo se evalúa cuando ya hay candidatos válidos (no acumula sobre vacío).
-    if (candidates.length > 0 && Math.random() < LEAP_CHANCE) {
-        const wider = activePool.filter(n => n.midi !== lastMidi);
+    // Excepción expresiva solo en avanzado: ampliar el rango un poco,
+    // nunca abrir al pool completo para evitar saltos de >2 octavas.
+    if (difficulty === 'advanced' && candidates.length > 0 && Math.random() < LEAP_CHANCE) {
+        const wider = activePool.filter(n =>
+            n.midi !== lastMidi &&
+            Math.abs(n.midi - lastMidi) <= maxLeap + LEAP_EXTRA
+        );
         if (wider.length > 0) candidates = wider;
     }
 
