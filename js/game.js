@@ -689,6 +689,20 @@ function processGuitarInput() {
         const end = isSwingActive ? n.swingEndBeat : n.endBeat;
         return currentBeat >= start && currentBeat < end;
     });
+
+    // Ventana anticipada: si no hay nota activa, buscar la próxima nota no tocada
+    // cuyo beat de inicio esté dentro de 0.4 beats y cuyo onset fue reciente
+    if (!activeNote && isAudioActive) {
+        const anticipationWindow = 0.40;
+        activeNote = generatedExercise.find(n => {
+            if (n.hit || n.miss) return false;
+            const start = isSwingActive ? n.swingStartBeat : n.startBeat;
+            const ahead = start - currentBeat;
+            const sinceOnset = currentBeat - lastOnsetBeat;
+            // Nota que viene pronto Y el onset fue en los últimos 0.4 beats
+            return ahead > 0 && ahead <= anticipationWindow && sinceOnset <= anticipationWindow;
+        });
+    }
     
     if (activeNote) {
         document.getElementById('currentNoteText').innerHTML = `Toca ahora: <span style="font-size: 20px; text-decoration: underline;">${activeNote.nombre}</span>`;
@@ -706,14 +720,27 @@ function processGuitarInput() {
         if (hz > 70 && hz < 1000 && activeNote) {
             const hzCalibrado = hz * Math.pow(2, -calibracionSemitonos / 12);
             deviationCents = 1200 * Math.log2(hzCalibrado / activeNote.hz);
-            
+
             const cappedDeviation = Math.max(-100, Math.min(100, deviationCents));
-            const needlePos = 50 + (cappedDeviation / 2);
+            // Escala de ±50 cents → aguja de 0-100% (centro en 50%)
+            const needlePos = 50 + cappedDeviation;
             const needle = document.getElementById('tunerNeedle');
+            const inTune = Math.abs(deviationCents) < 15;
+            const close   = Math.abs(deviationCents) < 35;
             if (needle) {
                 needle.style.left = `${needlePos}%`;
-                if (Math.abs(deviationCents) < 25) needle.style.backgroundColor = 'var(--primary)';
-                else needle.style.backgroundColor = 'var(--danger)';
+                needle.style.backgroundColor = inTune ? '#22d3ee' : close ? '#f59e0b' : '#ef4444';
+            }
+            // Actualizar indicadores del afinador
+            const tunerWidget = document.getElementById('tunerWidget');
+            const tunerNoteName = document.getElementById('tunerNoteName');
+            const tunerCentsLabel = document.getElementById('tunerCentsLabel');
+            if (tunerWidget) tunerWidget.style.opacity = '1';
+            if (tunerNoteName) tunerNoteName.textContent = activeNote.nombre;
+            if (tunerCentsLabel) {
+                const centsRounded = Math.round(deviationCents);
+                tunerCentsLabel.textContent = `${centsRounded > 0 ? '+' : ''}${centsRounded} c`;
+                tunerCentsLabel.style.color = inTune ? '#22d3ee' : close ? '#f59e0b' : '#ef4444';
             }
             
             if (Math.abs(deviationCents) < 75) {
@@ -788,6 +815,13 @@ function processGuitarInput() {
     } else {
         const needle = document.getElementById('tunerNeedle');
         if (needle) needle.style.left = "50%";
+        // Silencio: apagar indicadores del afinador
+        const tunerWidget = document.getElementById('tunerWidget');
+        const tunerNoteName = document.getElementById('tunerNoteName');
+        const tunerCentsLabel = document.getElementById('tunerCentsLabel');
+        if (tunerWidget) tunerWidget.style.opacity = '0.35';
+        if (tunerNoteName) tunerNoteName.textContent = '—';
+        if (tunerCentsLabel) { tunerCentsLabel.textContent = '— c'; tunerCentsLabel.style.color = ''; }
         aciertosConsecutivos = Math.max(0, aciertosConsecutivos - 1);
     }
     
@@ -846,7 +880,8 @@ function finishReading() {
     drawStaff();
     
     const accuracy = totalNotes > 0 ? Math.round((hits / totalNotes) * 100) : 0;
-    const rhythmScore = hits > 0 ? Math.round(((perfectCount * 1.0 + goodCount * 0.8 + earlyLateCount * 0.5) / hits) * 100) : 0;
+    // Dividir por totalNotes: notas perdidas cuentan 0, no se ignoran
+    const rhythmScore = totalNotes > 0 ? Math.round(((perfectCount * 1.0 + goodCount * 0.8 + earlyLateCount * 0.5) / totalNotes) * 100) : 0;
 
     document.getElementById('totalNotesScore').textContent = totalNotes;
     document.getElementById('hitsScore').textContent = hits;

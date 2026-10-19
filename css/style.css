@@ -98,13 +98,11 @@ body {
 .tuner-bar {
     width: 100%;
     background-color: #0f172a;
-    height: 8px;
-    border-radius: 4px;
-    margin: 12px auto;
+    height: 10px;
+    border-radius: 5px;
     position: relative;
     overflow: hidden;
     border: 1px solid #334155;
-    max-width: 400px;
 }
 
 #tunerNeedle {
