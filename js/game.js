@@ -9,8 +9,9 @@ function stopAudioPreview() {
     
     const previewBtn = document.getElementById('playPreviewBtn');
     if (previewBtn) {
-        previewBtn.textContent = "Escuchar Ejercicio";
-        previewBtn.className = "px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold rounded-xl transition-all shadow-md text-sm";
+        previewBtn.textContent = "▷ Escuchar";
+        previewBtn.classList.remove('bg-rose-600', 'hover:bg-rose-500', 'border-rose-500', 'text-white');
+        previewBtn.classList.add('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700', 'text-slate-300');
     }
     
     const startPracticeBtn = document.getElementById('startReadingBtn_game');
@@ -51,8 +52,9 @@ async function startAudioPreview() {
     isPreviewPlaying = true;
     const previewBtn = document.getElementById('playPreviewBtn');
     if (previewBtn) {
-        previewBtn.textContent = "Detener Escucha";
-        previewBtn.className = "px-6 py-3 bg-rose-600 hover:bg-rose-500 border border-rose-500 text-white font-bold rounded-xl transition-all shadow-md text-sm";
+        previewBtn.textContent = "◼ Detener";
+        previewBtn.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700', 'text-slate-300');
+        previewBtn.classList.add('bg-rose-600', 'hover:bg-rose-500', 'border-rose-500', 'text-white');
     }
     
     const startPracticeBtn = document.getElementById('startReadingBtn_game');
@@ -67,30 +69,48 @@ async function startAudioPreview() {
 
     const bps = bpm / 60;
     const beatDuration = 1 / bps;
-    startTime = audioContext.currentTime;
+    // 4 beats de conteo previo + el ejercicio
+    const COUNT_BEATS = 4;
+    startTime = audioContext.currentTime + COUNT_BEATS * beatDuration;
     lastTickBeat = -1;
-    
+
     generatedExercise.forEach(note => note.previewPlayed = false);
-    
+
     const panel = document.getElementById('config-panel');
     if (panel && !panel.classList.contains('hidden')) {
         window.toggleConfigPanel();
     }
 
+    // Programar claqueta de conteo (4 beats antes del inicio)
+    const overlay = document.getElementById('countdownOverlay');
+    const countLabels = ['4', '3', '2', '1'];
+    countLabels.forEach((label, i) => {
+        const clickTime = audioContext.currentTime + i * beatDuration;
+        playMetronomeClick(i === 0 ? 1000 : 700, 0.07, clickTime);
+        countdownTimers.push(setTimeout(() => {
+            if (!isPreviewPlaying) return;
+            if (overlay) { overlay.textContent = label; overlay.style.display = 'flex'; }
+            document.getElementById('currentNoteText').textContent = `Conteo: ${label}`;
+        }, i * beatDuration * 1000));
+    });
+    countdownTimers.push(setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+    }, COUNT_BEATS * beatDuration * 1000));
+
     function previewLoop() {
         if (!isPreviewPlaying) return;
-        
+
         const elapsed = audioContext.currentTime - startTime;
         currentBeat = elapsed * bps;
-        
+
         const currentBeatInt = Math.floor(currentBeat);
-        if (currentBeatInt > lastTickBeat && currentBeatInt < totalBeats) {
+        if (currentBeatInt >= 0 && currentBeatInt > lastTickBeat && currentBeatInt < totalBeats) {
             const isFirstBeatOfBar = (currentBeatInt % 4 === 0);
             const clickTime = startTime + (currentBeatInt / bps);
             playMetronomeClick(isFirstBeatOfBar ? 1000 : 600, 0.05, clickTime);
             lastTickBeat = currentBeatInt;
         }
-        
+
         generatedExercise.forEach(note => {
             const targetStart = isSwingActive ? note.swingStartBeat : note.startBeat;
             if (currentBeat >= targetStart && !note.previewPlayed) {
@@ -102,9 +122,9 @@ async function startAudioPreview() {
                 document.getElementById('currentNoteText').innerHTML = `Escuchando: <span style='font-size: 18px;'>${note.nombre}</span>`;
             }
         });
-        
+
         drawStaff();
-        
+
         if (currentBeat < totalBeats) {
             requestAnimationFrame(previewLoop);
         } else {
@@ -112,8 +132,9 @@ async function startAudioPreview() {
             document.getElementById('currentNoteText').innerHTML = "Escucha finalizada. ¿Listo para intentar?";
         }
     }
-    
-    previewLoop();
+
+    // Arrancar el loop desde ya (currentBeat será negativo durante el conteo)
+    requestAnimationFrame(previewLoop);
 }
 
 function stopRecordingPlayback() {
