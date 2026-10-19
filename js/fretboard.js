@@ -26,7 +26,7 @@ function updateFretboardLabels() {
         box.style.boxShadow = '';
         box.classList.remove('bg-cyan-500/10');
         if (idx < 5) {
-            box.style.borderRight = "3.5px solid #cbd5e1";
+            box.style.borderRight = "1px solid #1e2535";
         } else {
             box.style.borderRight = '';
         }
@@ -35,8 +35,8 @@ function updateFretboardLabels() {
     if (position === "1") {
         const nutBox = document.getElementById('fret-box-0');
         if (nutBox) {
-            nutBox.style.borderRight = "8px solid #cbd5e1";
-            nutBox.style.boxShadow = "3px 0 6px rgba(0,0,0,0.6)";
+            nutBox.style.borderRight = "5px solid #94a3b8";
+            nutBox.style.boxShadow = "2px 0 4px rgba(0,0,0,0.5)";
         }
         if (f0) { f0.style.flex = "1"; f0.textContent = "Al Aire"; }
         if (f1) f1.textContent = "Traste 1";
@@ -88,10 +88,10 @@ function updateFretboardLabels() {
     for (let i = boxStart; i <= boxEnd; i++) {
         const box = document.getElementById(`fret-box-${i}`);
         if (box) {
-            box.style.backgroundColor = "rgba(34, 211, 238, 0.10)";
-            box.style.boxShadow = "inset 0 0 10px rgba(34, 211, 238, 0.12)";
-            if (i === boxStart) box.style.borderLeft = "3px solid #22d3ee";
-            if (i === boxEnd) box.style.borderRight = "3px solid #22d3ee";
+            box.style.backgroundColor = "rgba(255,255,255,0.02)";
+            box.style.boxShadow = "";
+            if (i === boxStart) box.style.borderLeft = "2px solid #334155";
+            if (i === boxEnd) box.style.borderRight = "2px solid #334155";
         }
     }
 
@@ -208,15 +208,15 @@ function renderScaleMarkers() {
         const shapeClass = isFret0 ? "rounded-lg border-dashed" : "rounded-full";
 
         if (isTonic) {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border-2 border-white bg-cyan-400 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_#22d3ee] z-[25]`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-400 bg-slate-200 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-[25]`;
         } else if (note.type === 'chord') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-blue-500/50 bg-slate-950/70 text-blue-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_6px_rgba(59,130,246,0.3)] z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-700 bg-slate-900/80 text-slate-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else if (note.type === 'tension') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-emerald-500/50 bg-slate-950/70 text-emerald-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_6px_rgba(16,185,129,0.3)] z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-700 bg-slate-900/80 text-slate-500 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else if (note.type === 'avoid') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-red-500/40 bg-slate-950/75 text-red-400/80 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-800 bg-slate-950/70 text-slate-600 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-600 bg-slate-900/60 text-slate-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-800 bg-slate-950/50 text-slate-600 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         }
 
         container.appendChild(dot);
@@ -290,15 +290,15 @@ function updateFretboardMarker(note) {
         const shapeClass = isFret0 ? "rounded-lg border-dashed" : "rounded-full";
 
         if (note.midi % 12 === rootPitch) {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border-2 border-white bg-cyan-400 text-slate-950 shadow-[0_0_22px_#22d3ee] z-30 font-black`;
+            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-slate-300 bg-slate-100 text-slate-950 z-30 font-black`;
         } else if (note.type === 'chord') {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border-2 border-blue-300 bg-blue-500 text-white shadow-[0_0_18px_#3b82f6] z-30 font-bold`;
+            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-amber-700 bg-amber-900/70 text-amber-300 z-30 font-bold`;
         } else if (note.type === 'tension') {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border-2 border-emerald-300 bg-emerald-500 text-white shadow-[0_0_18px_#10b981] z-30 font-bold`;
+            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-amber-800 bg-amber-900/50 text-amber-400 z-30 font-bold`;
         } else if (note.type === 'avoid') {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border-2 border-red-300 bg-red-600 text-white shadow-[0_0_18px_#ef4444] z-30 font-bold`;
+            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-slate-700 bg-slate-800/70 text-slate-400 z-30 font-bold`;
         } else {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border-2 border-amber-300 bg-amber-500 text-white shadow-[0_0_22px_#f59e0b] z-30 font-black`;
+            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-amber-700 bg-amber-900/70 text-amber-300 z-30 font-black`;
         }
     }
 }

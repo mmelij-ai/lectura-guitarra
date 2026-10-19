@@ -116,15 +116,15 @@ body {
     border-radius: 2px;
 }
 
-/* Diapasón de Guitarra Dark con Textura Ébano de Alto Contraste */
+/* Diapasón de Guitarra — Diseño Sobrio */
 .fretboard {
-    background: linear-gradient(to bottom, #090d16 0%, #1e293b 50%, #090d16 100%);
-    border: 2px solid #334155;
-    border-radius: 12px;
+    background: #12151e;
+    border: 1px solid #1e2535;
+    border-radius: 8px;
     padding: 32px 0 24px 0;
     position: relative;
     margin-bottom: 20px;
-    box-shadow: inset 0 3px 12px rgba(0,0,0,0.6);
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5);
     overflow: visible;
 }
 
@@ -139,14 +139,15 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    z-index: 15; /* Cuerdas por debajo de las notas de la escala */
+    z-index: 15;
 }
 
+/* Cuerdas con grosor diferenciado: prima (1ª) → bordón (6ª) */
 .string {
-    height: 2px;
-    background-color: #64748b;
     width: 100%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    background-color: #7a7a68;
+    opacity: 0.75;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
 
 .frets-grid {
@@ -159,6 +160,7 @@ body {
 
 .fret-line {
     height: 100%;
+    border-right: 1px solid #1e2535;
     transition: background-color 0.2s ease, border 0.2s ease;
 }
 
@@ -167,7 +169,7 @@ body {
     justify-content: space-around;
     margin-top: 24px;
     font-size: 9px;
-    color: #64748b;
+    color: #334155;
     font-family: monospace;
     font-weight: bold;
 }
@@ -183,6 +185,7 @@ body {
     text-align: center;
 }
 
+/* Marcador de nota activa — sin animación de pulso, sin glow */
 .note-marker {
     position: absolute;
     border-radius: 50%;
@@ -191,39 +194,32 @@ body {
     align-items: center;
     justify-content: center;
     transform: translate(-50%, -50%);
-    z-index: 30; /* El marcador de nota actual parpadea con prioridad máxima */
-    animation: pulseMarker 1.5s infinite ease-in-out;
+    z-index: 30;
+    /* sin animation */
 }
 
-@keyframes pulseMarker {
-    0% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.12); }
-    100% { transform: translate(-50%, -50%) scale(1); }
-}
-
-/* Inlay Markers — ubicados en el borde inferior del mástil para no colisionar con notas */
+/* Inlay Markers — puntos mínimos */
 .inlay-dot {
     position: absolute;
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     pointer-events: none;
-    z-index: 5; /* detrás de notas y cuerdas */
+    z-index: 5;
     display: flex;
     align-items: center;
     justify-content: center;
     transform: translate(-50%, -50%);
-    top: 85%; /* parte inferior del contenedor, lejos de las cuerdas medias */
-    opacity: 0.45; /* más tenue para no confundir con notas */
+    top: 85%;
+    opacity: 0.5;
 }
 
 .inlay-dot::after {
     content: '';
-    width: 10px;
-    height: 10px;
-    background: radial-gradient(circle, #94a3b8 0%, #475569 70%, #1e293b 100%);
+    width: 6px;
+    height: 6px;
+    background: #1e293b;
     border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.6);
-    border: 1px solid #0f172a;
+    border: 1px solid #2d3748;
     display: block;
 }
 
