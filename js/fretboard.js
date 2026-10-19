@@ -226,17 +226,17 @@ function renderScaleMarkers() {
         dot.style.userSelect = 'none';
 
         if (isTonic) {
-            dot.style.backgroundColor = '#1e3a5f';      // azul profundo — tónica
+            dot.style.backgroundColor = '#f1f5f9';      // blanco — tónica
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             dot.style.borderWidth = '2.5px';
             dot.style.borderColor = '#ffffff';
-            dot.style.color = '#ffffff';
+            dot.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            dot.style.backgroundColor = '#2d5a8e';      // azul claro — arpegio
+            dot.style.backgroundColor = '#3b6fad';      // azul más claro — arpegio
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             dot.style.borderWidth = '2px';
             dot.style.borderColor = '#ffffff';
-            dot.style.color = '#fde68a';                // texto amarillo
+            dot.style.color = '#fde68a';
         } else if (note.type === 'tension') {
             dot.style.backgroundColor = '#1e3356';      // azul oscuro — tensión
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
@@ -244,11 +244,11 @@ function renderScaleMarkers() {
             dot.style.borderColor = '#ffffff';
             dot.style.color = '#f1f5f9';
         } else if (note.type === 'avoid') {
-            dot.style.backgroundColor = '#1a2a45';      // azul muy oscuro — avoid
+            dot.style.backgroundColor = '#7f1d1d';      // carmesí — avoid
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
-            dot.style.borderWidth = '1px';
+            dot.style.borderWidth = '1.5px';
             dot.style.borderColor = '#ffffff';
-            dot.style.color = '#cbd5e1';
+            dot.style.color = '#fecaca';
         } else {
             dot.style.backgroundColor = '#1e3356';      // azul oscuro — escala
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
@@ -330,13 +330,13 @@ function updateFretboardMarker(note) {
         marker.style.boxSizing = 'border-box';
 
         if (note.midi % 12 === rootPitch) {
-            marker.style.backgroundColor = '#1e3a5f';
+            marker.style.backgroundColor = '#f1f5f9';
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             marker.style.borderWidth = '2.5px';
             marker.style.borderColor = '#ffffff';
-            marker.style.color = '#ffffff';
+            marker.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            marker.style.backgroundColor = '#2d5a8e';
+            marker.style.backgroundColor = '#3b6fad';
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             marker.style.borderWidth = '2px';
             marker.style.borderColor = '#ffffff';
@@ -348,11 +348,11 @@ function updateFretboardMarker(note) {
             marker.style.borderColor = '#ffffff';
             marker.style.color = '#f1f5f9';
         } else if (note.type === 'avoid') {
-            marker.style.backgroundColor = '#1a2a45';
+            marker.style.backgroundColor = '#7f1d1d';
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
-            marker.style.borderWidth = '1px';
+            marker.style.borderWidth = '1.5px';
             marker.style.borderColor = '#ffffff';
-            marker.style.color = '#cbd5e1';
+            marker.style.color = '#fecaca';
         } else {
             marker.style.backgroundColor = '#1e3356';
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
