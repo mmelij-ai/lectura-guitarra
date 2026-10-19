@@ -2,6 +2,12 @@
 // MÓDULO DIAPASÓN VIRTUAL DE GUITARRA
 // ==========================================
 
+// Mapeo de nota → semitono; compartido por updateFretboardLabels y updateFretboardMarker
+const TONIC_SEMITONE = {
+    "C": 0, "C#": 1, "Db": 1, "D": 2, "Eb": 3, "E": 4, "F": 5,
+    "F#": 6, "Gb": 6, "G": 7, "Ab": 8, "A": 9, "Bb": 10, "B": 11
+};
+
 function updateFretboardLabels() {
     const positionEl = document.getElementById('positionSelect');
     const position = positionEl ? positionEl.value : "5";
@@ -131,11 +137,7 @@ function renderScaleMarkers() {
     const position = positionEl ? positionEl.value : "5";
     const tonic = tonicEl ? tonicEl.value : "C";
 
-    const tonicLookup = {
-        "C": 0, "C#": 1, "D": 2, "Eb": 3, "E": 4, "F": 5, 
-        "F#": 6, "G": 7, "Ab": 8, "A": 9, "Bb": 10, "B": 11
-    };
-    const rootPitch = tonicLookup[tonic];
+    const rootPitch = TONIC_SEMITONE[tonic] ?? 0;
 
     const stringsContainer = document.getElementById('stringsContainer');
     const containerHeight = stringsContainer ? stringsContainer.clientHeight : 120;
@@ -229,12 +231,8 @@ function updateFretboardMarker(note) {
     const position = positionEl ? positionEl.value : "5";
     const tonic = tonicEl ? tonicEl.value : "C";
 
-    const tonicLookup = {
-        "C": 0, "C#": 1, "D": 2, "Eb": 3, "E": 4, "F": 5, 
-        "F#": 6, "G": 7, "Ab": 8, "A": 9, "Bb": 10, "B": 11
-    };
-    const rootPitch = tonicLookup[tonic];
-    
+    const rootPitch = TONIC_SEMITONE[tonic] ?? 0;
+
     if (!note) {
         if (marker) marker.style.display = 'none';
         const positionNames = {

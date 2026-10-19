@@ -38,13 +38,19 @@ function renderScoreToOffscreen() {
     
     const staves = [];
     const staveWidths = [];
-    if (totalBars === 2) {
-        staveWidths.push(420, 360); 
-    } else {
-        staveWidths.push(240, 180, 180, 180); 
-    }
-    
-    let currentX = 20;
+    // Calcular anchos dinámicamente desde el ancho total del canvas (820)
+    // dejando margen izquierdo fijo de 20px y dividiendo el espacio restante.
+    // El primer compás necesita más espacio por clave + compás (≈90px extra).
+    const CANVAS_W   = 820;
+    const MARGIN_L   = 20;
+    const CLEF_EXTRA = 65; // espacio adicional del primer compás (clave + 4/4)
+    const usableW = CANVAS_W - MARGIN_L - CLEF_EXTRA;
+    const firstW  = Math.floor(usableW / totalBars) + CLEF_EXTRA;
+    const restW   = Math.floor((usableW - firstW + CLEF_EXTRA) / (totalBars - 1 || 1));
+    staveWidths.push(firstW);
+    for (let i = 1; i < totalBars; i++) staveWidths.push(restW);
+
+    let currentX = MARGIN_L;
     for (let i = 0; i < totalBars; i++) {
         const stave = new VF.Stave(currentX, 10, staveWidths[i]);
         if (i === 0) {
@@ -181,7 +187,7 @@ function renderScoreToOffscreen() {
             }
         });
         
-        const availableWidth = m === 0 ? (staveWidths[0] - 90) : (staveWidths[m] - 25);
+        const availableWidth = m === 0 ? (staveWidths[0] - CLEF_EXTRA - 25) : (staveWidths[m] - 25);
         const formatter = new VF.Formatter();
         formatter.joinVoices([voice]).format([voice], availableWidth);
         

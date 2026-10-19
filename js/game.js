@@ -879,10 +879,6 @@ function processGuitarInput() {
     }
 }
 
-function updateDashboardStats() {
-    // Las estadísticas ahora se muestran solo en el scorecard modal al finalizar
-}
-
 function finishReading() {
     isPlaying = false;
     if (animationId) cancelAnimationFrame(animationId);

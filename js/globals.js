@@ -54,11 +54,6 @@ let globalLowpassFilter = null;
 let globalInputGain = null;
 let globalSilentGain = null;
 
-// Canvas de Renderizado Offscreen para caché de Vexflow (no requerido pero conservado por consistencia)
-const offscreenCanvas = document.createElement('canvas');
-offscreenCanvas.width = 820; // Sincronizado al nuevo ancho
-offscreenCanvas.height = 150;
-
 // Elementos UI básicos
 const bpmSlider = document.getElementById('bpmSlider');
 const bpmVal = document.getElementById('bpmVal');
