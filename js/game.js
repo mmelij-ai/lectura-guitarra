@@ -490,36 +490,75 @@ async function startRealPractice() {
     }
 }
 
-function selectNextNoteWithDifficulty(difficulty, activePool, lastNote) {
+// ─── Control de saltos ───────────────────────────────────────────────────────
+// Máximo intervalo permitido por dificultad (en semitonos).
+// Un salto mayor se permite con probabilidad LEAP_CHANCE (excepción expresiva).
+const MAX_LEAP = { basic: 5, normal: 9, intermediate: 9, advanced: 14 };
+const LEAP_CHANCE = 0.05; // 5 % de las veces se permite un salto mayor
+
+/**
+ * Selecciona la siguiente nota aplicando:
+ *   1. Control de salto máximo según dificultad (punto 2)
+ *   2. Peso de contorno melódico — el caller pasa contourBias ∈ [-1, 1]
+ *      donde +1 favorece notas más agudas y -1 notas más graves (punto 1)
+ */
+function selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourBias = 0) {
     if (!lastNote) {
         return activePool[Math.floor(Math.random() * activePool.length)];
     }
-    
-    const lastIdx = activePool.findIndex(n => n.nombre === lastNote.nombre);
-    
-    if (difficulty === "basic" && lastIdx !== -1) {
-        const allowedOffsets = [-2, -1, 1, 2];
-        const allowedIndices = [];
-        
-        allowedOffsets.forEach(offset => {
-            const targetIdx = lastIdx + offset;
-            if (targetIdx >= 0 && targetIdx < activePool.length) {
-                allowedIndices.push(targetIdx);
-            }
-        });
-        
-        if (allowedIndices.length > 0) {
-            const chosenIdx = allowedIndices[Math.floor(Math.random() * allowedIndices.length)];
-            return activePool[chosenIdx];
-        }
+
+    const lastMidi = lastNote.midi;
+    const maxLeap  = MAX_LEAP[difficulty] ?? MAX_LEAP.intermediate;
+
+    // Candidatos dentro del rango de salto aceptable (excluyendo la nota actual)
+    let candidates = activePool.filter(n =>
+        n.midi !== lastMidi &&
+        Math.abs(n.midi - lastMidi) <= maxLeap
+    );
+
+    // Si el pool queda vacío (escala muy pequeña) o cae el dado del salto expresivo,
+    // abrir a cualquier nota (sin repetición de la misma)
+    if (candidates.length === 0 || Math.random() < LEAP_CHANCE) {
+        candidates = activePool.filter(n => n.midi !== lastMidi);
     }
-    
-    let randomNote;
-    do {
-        randomNote = activePool[Math.floor(Math.random() * activePool.length)];
-    } while (randomNote.nombre === lastNote.nombre);
-    
-    return randomNote;
+
+    // Fallback final: usar todo el pool
+    if (candidates.length === 0) candidates = activePool;
+
+    // ── Contorno melódico: asignar pesos según posición MIDI relativa ──────
+    // Cuando contourBias > 0 queremos notas más agudas → mayor peso a midi alto.
+    // Cuando contourBias < 0 queremos notas más graves → mayor peso a midi bajo.
+    // El peso base es 1; el modificador escala linealmente con la distancia desde
+    // la mediana del pool, amplificada por |contourBias|.
+    if (Math.abs(contourBias) > 0.05) {
+        const midiValues = candidates.map(n => n.midi);
+        const midiMin = Math.min(...midiValues);
+        const midiMax = Math.max(...midiValues);
+        const midiRange = midiMax - midiMin || 1;
+
+        candidates = candidates.map(n => {
+            // normalizedPos ∈ [0,1]: 0 = nota más grave, 1 = más aguda
+            const normalizedPos = (n.midi - midiMin) / midiRange;
+            // Si bias > 0: notas agudas (normalizedPos alto) reciben más peso
+            // Si bias < 0: notas graves (normalizedPos bajo) reciben más peso
+            const weight = 1 + contourBias * (contourBias > 0
+                ? normalizedPos            // sesgo hacia agudos
+                : (1 - normalizedPos));    // sesgo hacia graves
+            return { note: n, weight: Math.max(0.1, weight) };
+        });
+
+        // Selección ponderada
+        const totalWeight = candidates.reduce((s, c) => s + c.weight, 0);
+        let r = Math.random() * totalWeight;
+        for (const c of candidates) {
+            r -= c.weight;
+            if (r <= 0) return c.note;
+        }
+        return candidates[candidates.length - 1].note;
+    }
+
+    // Sin sesgo: uniforme
+    return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function generateExerciseSequence() {
@@ -573,10 +612,23 @@ function generateExerciseSequence() {
                 }
                 
                 if (!randomNote) {
+                    // ── Contorno melódico (punto 1) ────────────────────────────
+                    // Dividimos el ejercicio en 4 fases (por beat relativo al total):
+                    //   0–25 %  → ascenso   bias +0.5
+                    //  25–50 %  → clímax    bias +0.2  (sostener altura)
+                    //  50–75 %  → descenso  bias -0.5
+                    //  75–100 % → cadencia  bias -0.3  (acercarse a la tónica)
+                    const progress = totalBeats > 0 ? currentPos / totalBeats : 0;
+                    let contourBias = 0;
+                    if      (progress < 0.25) contourBias =  0.5;
+                    else if (progress < 0.50) contourBias =  0.2;
+                    else if (progress < 0.75) contourBias = -0.5;
+                    else                      contourBias = -0.3;
+
                     let attempts = 0;
                     while (attempts < 50) {
-                        randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote);
-                        
+                        randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourBias);
+
                         if (randomNote.type === 'avoid') {
                             if (noteDuration === 1.0) {
                                 if (barBeats === 0.0 || barBeats === 2.0) {
@@ -594,9 +646,9 @@ function generateExerciseSequence() {
                         }
                         break;
                     }
-                    
+
                     if (!randomNote) {
-                        randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote);
+                        randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourBias);
                     }
                 }
                 
