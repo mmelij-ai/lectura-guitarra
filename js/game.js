@@ -24,6 +24,9 @@ function stopAudioPreview() {
         playRecBtnGame.removeAttribute('disabled');
     }
 
+    const newExBtn = document.getElementById('newExerciseBtn');
+    if (newExBtn) newExBtn.removeAttribute('disabled');
+
     updateFretboardMarker(null);
     drawStaff();
 }
@@ -66,6 +69,9 @@ async function startAudioPreview() {
     if (playRecBtnGame) {
         playRecBtnGame.setAttribute('disabled', 'true');
     }
+
+    const newExBtn = document.getElementById('newExerciseBtn');
+    if (newExBtn) newExBtn.setAttribute('disabled', 'true');
 
     const bps = bpm / 60;
     const beatDuration = 1 / bps;
@@ -175,9 +181,12 @@ function stopRecordingPlayback() {
     
     const previewBtn = document.getElementById('playPreviewBtn');
     if (previewBtn) previewBtn.removeAttribute('disabled');
-    
+
     const startPracticeBtn = document.getElementById('startReadingBtn_game');
     if (startPracticeBtn) startPracticeBtn.removeAttribute('disabled');
+
+    const newExBtn = document.getElementById('newExerciseBtn');
+    if (newExBtn) newExBtn.removeAttribute('disabled');
 }
 
 async function startRecordingPlayback() {
@@ -222,10 +231,13 @@ async function startRecordingPlayback() {
     
     const previewBtn = document.getElementById('playPreviewBtn');
     if (previewBtn) previewBtn.setAttribute('disabled', 'true');
-    
+
     const startPracticeBtn = document.getElementById('startReadingBtn_game');
     if (startPracticeBtn) startPracticeBtn.setAttribute('disabled', 'true');
-    
+
+    const newExBtn = document.getElementById('newExerciseBtn');
+    if (newExBtn) newExBtn.setAttribute('disabled', 'true');
+
     player.src = recordedAudioURL;
     player.play().then(() => {
         const reviewBar = document.getElementById('recordingPlaybackBar');

@@ -121,6 +121,19 @@ if (stopBtn) {
     stopBtn.addEventListener('click', stopPractice);
 }
 
+const newExerciseBtn = document.getElementById('newExerciseBtn');
+if (newExerciseBtn) {
+    newExerciseBtn.addEventListener('click', () => {
+        // Solo permitir cuando no hay práctica ni preview activo
+        if (isPlaying || isPreviewPlaying) return;
+        generateExerciseSequence();
+        renderScoreToOffscreen();
+        drawStaff();
+        updateFretboardMarker(null);
+        document.getElementById('currentNoteText').textContent = 'Nueva lectura generada. Estudia la partitura antes de empezar.';
+    });
+}
+
 const retryBtn = document.getElementById('retryBtn');
 if (retryBtn) {
     retryBtn.addEventListener('click', () => {
