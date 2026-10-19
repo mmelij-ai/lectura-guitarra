@@ -85,14 +85,20 @@ function renderScoreToOffscreen() {
         let idx = 0;
         while (idx < notesInMeasure.length) {
             const noteData = notesInMeasure[idx];
-            if (noteData.duration === 0.5 && idx + 1 < notesInMeasure.length && notesInMeasure[idx+1].duration === 0.5) {
+            // Los silencios no tienen stem — asignamos dirección neutral y seguimos
+            if (noteData.isRest) {
+                stemDirections[idx] = VF.Stem.UP;
+                idx += 1;
+                continue;
+            }
+            if (noteData.duration === 0.5 && idx + 1 < notesInMeasure.length && !notesInMeasure[idx+1].isRest && notesInMeasure[idx+1].duration === 0.5) {
                 const val1 = getNoteValue(noteData.vfKey);
                 const val2 = getNoteValue(notesInMeasure[idx+1].vfKey);
                 const d1 = Math.abs(val1 - 34);
                 const d2 = Math.abs(val2 - 34);
                 const furthestVal = d1 >= d2 ? val1 : val2;
                 const pairDirection = furthestVal >= 34 ? VF.Stem.DOWN : VF.Stem.UP;
-                
+
                 stemDirections[idx] = pairDirection;
                 stemDirections[idx+1] = pairDirection;
                 idx += 2;
@@ -105,7 +111,20 @@ function renderScoreToOffscreen() {
         const vfNotes = [];
         notesInMeasure.forEach((note, noteIdx) => {
             const stemDir = stemDirections[noteIdx];
-            
+
+            // ── Silencio ─────────────────────────────────────────────────────
+            if (note.isRest) {
+                const restDur = durationMap[note.duration] === "q" ? "qr" : "8r";
+                const restNote = new VF.StaveNote({
+                    keys: ["b/4"],
+                    duration: restDur
+                });
+                restNote.setStyle({ fillStyle: '#1e293b', strokeStyle: '#1e293b' });
+                note.staveNoteRef = restNote;
+                vfNotes.push(restNote);
+                return;
+            }
+
             const staveNote = new VF.StaveNote({
                 keys: [note.vfKey],
                 duration: durationMap[note.duration] || "q",
@@ -176,7 +195,8 @@ function renderScoreToOffscreen() {
         let beamNotes = [];
         vfNotes.forEach((staveNote, idx) => {
             const noteData = notesInMeasure[idx];
-            if (noteData.duration === 0.5) {
+            // No hacer beam si alguna de las dos es un silencio
+            if (noteData.duration === 0.5 && !noteData.isRest) {
                 beamNotes.push(staveNote);
                 if (beamNotes.length === 2) {
                     beams.push(new VF.Beam(beamNotes));

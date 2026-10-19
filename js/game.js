@@ -115,6 +115,10 @@ async function startAudioPreview() {
             const targetStart = isSwingActive ? note.swingStartBeat : note.startBeat;
             if (currentBeat >= targetStart && !note.previewPlayed) {
                 note.previewPlayed = true;
+                if (note.isRest) {
+                    document.getElementById('currentNoteText').textContent = 'Silencio';
+                    return;
+                }
                 const noteTime = startTime + (targetStart / bps);
                 const targetDur = isSwingActive ? note.swingDuration : note.duration;
                 playSynthNote(note.hz, targetDur * beatDuration, noteTime);
@@ -609,8 +613,35 @@ function generateExerciseSequence() {
             
             notesToGen.forEach(noteDuration => {
                 const lastNote = generatedExercise[generatedExercise.length - 1] || null;
+                const lastWasRest = lastNote && lastNote.isRest;
+
+                // ── Silencios ────────────────────────────────────────────────
+                // Negra: permitido en tiempos 2, 3, 4 (barBeats > 0)
+                // Corchea: solo en la primera corchea del tiempo (beat entero)
+                // Nunca dos silencios consecutivos. Prob: 15 %
+                const REST_CHANCE = 0.15;
+                const isFirstNote = generatedExercise.length === 0;
+                const restAllowed = !isFirstNote && !lastWasRest && (
+                    (noteDuration === 1.0 && barBeats > 0) ||
+                    (noteDuration === 0.5 && Math.abs(barBeats % 1.0) < 0.01)
+                );
+
+                if (restAllowed && Math.random() < REST_CHANCE) {
+                    generatedExercise.push({
+                        isRest: true,
+                        startBeat: currentPos,
+                        endBeat: currentPos + noteDuration,
+                        duration: noteDuration,
+                        hit: true,   // auto-acierto: no requiere pitch
+                        miss: false
+                    });
+                    currentPos += noteDuration;
+                    barBeats += noteDuration;
+                    return;
+                }
+
                 let randomNote = null;
-                
+
                 if (generatedExercise.length === 0) {
                     const startOnTonic = document.getElementById('startOnTonicCheck');
                     if (!startOnTonic || startOnTonic.checked) {
@@ -620,7 +651,7 @@ function generateExerciseSequence() {
                         }
                     }
                 }
-                
+
                 if (!randomNote) {
                     // ── Contorno melódico (punto 1) ────────────────────────────
                     // Dividimos el ejercicio en 4 fases (por beat relativo al total):
@@ -661,19 +692,19 @@ function generateExerciseSequence() {
                         randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourBias);
                     }
                 }
-                
+
                 const idealHz = 440 * Math.pow(2, (randomNote.midi - 69) / 12);
 
                 generatedExercise.push({
                     ...randomNote,
-                    hz: idealHz, 
+                    hz: idealHz,
                     startBeat: currentPos,
                     endBeat: currentPos + noteDuration,
                     duration: noteDuration,
                     hit: false,
                     miss: false
                 });
-                
+
                 currentPos += noteDuration;
                 barBeats += noteDuration;
             });
@@ -768,6 +799,7 @@ function processGuitarInput() {
     lastRms = rms;
     
     let activeNote = generatedExercise.find(n => {
+        if (n.isRest) return false;
         const start = isSwingActive ? n.swingStartBeat : n.startBeat;
         const end = isSwingActive ? n.swingEndBeat : n.endBeat;
         return currentBeat >= start && currentBeat < end;
@@ -929,6 +961,7 @@ function processGuitarInput() {
     // Marcar notas expiradas como fallo — UN solo render al final si hubo cambios
     let needsRender = false;
     generatedExercise.forEach(note => {
+        if (note.isRest) return;
         const end = isSwingActive ? note.swingEndBeat : note.endBeat;
         if (currentBeat > end && !note.hit && !note.miss) {
             note.miss = true;
@@ -950,14 +983,16 @@ function finishReading() {
         mediaRecorder.stop();
     }
 
-    const totalNotes = generatedExercise.length;
+    // Los silencios (isRest) no cuentan como nota para el scoring
+    const totalNotes = generatedExercise.filter(n => !n.isRest).length;
     generatedExercise.forEach(n => {
+        if (n.isRest) return;
         if (!n.hit && !n.miss) { n.miss = true; misses++; }
     });
-    
+
     renderScoreToOffscreen();
     drawStaff();
-    
+
     const accuracy = totalNotes > 0 ? Math.round((hits / totalNotes) * 100) : 0;
     // Dividir por totalNotes: notas perdidas cuentan 0, no se ignoran
     const rhythmScore = totalNotes > 0 ? Math.round(((perfectCount * 1.0 + goodCount * 0.8 + earlyLateCount * 0.5) / totalNotes) * 100) : 0;
