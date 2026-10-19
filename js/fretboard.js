@@ -236,7 +236,7 @@ function renderScaleMarkers() {
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             dot.style.borderWidth = '2px';
             dot.style.borderColor = '#ffffff';
-            dot.style.color = '#fde68a';
+            dot.style.color = '#f1f5f9';
         } else if (note.type === 'tension') {
             dot.style.backgroundColor = '#1e3356';      // azul oscuro — tensión
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
@@ -250,7 +250,7 @@ function renderScaleMarkers() {
             dot.style.borderColor = '#ffffff';
             dot.style.color = '#fecaca';
         } else {
-            dot.style.backgroundColor = '#1e3356';      // azul oscuro — escala
+            dot.style.backgroundColor = '#1e4d35';      // verde oscuro — escala
             dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             dot.style.borderWidth = '1px';
             dot.style.borderColor = '#ffffff';
@@ -340,7 +340,7 @@ function updateFretboardMarker(note) {
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             marker.style.borderWidth = '2px';
             marker.style.borderColor = '#ffffff';
-            marker.style.color = '#fde68a';
+            marker.style.color = '#f1f5f9';
         } else if (note.type === 'tension') {
             marker.style.backgroundColor = '#1e3356';
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
@@ -354,7 +354,7 @@ function updateFretboardMarker(note) {
             marker.style.borderColor = '#ffffff';
             marker.style.color = '#fecaca';
         } else {
-            marker.style.backgroundColor = '#1e3356';
+            marker.style.backgroundColor = '#1e4d35';
             marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
             marker.style.borderWidth = '1px';
             marker.style.borderColor = '#ffffff';
