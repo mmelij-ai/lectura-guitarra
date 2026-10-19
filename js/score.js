@@ -189,8 +189,9 @@ function renderScoreToOffscreen() {
         });
         
         const voice = new VF.Voice({ num_beats: 4, beat_value: 4 });
+        voice.setMode(VF.Voice.Mode.SOFT);
         voice.addTickables(vfNotes);
-        
+
         const beams = [];
         let beamNotes = [];
         vfNotes.forEach((staveNote, idx) => {
@@ -206,13 +207,16 @@ function renderScoreToOffscreen() {
                 beamNotes = [];
             }
         });
-        
+
         const availableWidth = m === 0 ? (staveWidths[0] - CLEF_EXTRA - 25) : (staveWidths[m] - 25);
-        const formatter = new VF.Formatter();
-        formatter.joinVoices([voice]).format([voice], availableWidth);
-        
-        voice.draw(context, staves[m]);
-        beams.forEach(b => b.setContext(context).draw());
+        try {
+            const formatter = new VF.Formatter();
+            formatter.joinVoices([voice]).format([voice], availableWidth);
+            voice.draw(context, staves[m]);
+            beams.forEach(b => b.setContext(context).draw());
+        } catch (voiceErr) {
+            console.error('score render error (compás', m, '):', voiceErr);
+        }
     }
     
     const svgElement = div.querySelector('svg');
