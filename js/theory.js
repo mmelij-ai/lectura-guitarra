@@ -146,13 +146,13 @@ function buildDynamicNotePool() {
     if (position === "1") {
         frets = [0, 1, 2, 3, 4, 5];
     } else if (position === "2") {
-        frets = [0, 1, 2, 3, 4, 5, 6];
+        frets = [1, 2, 3, 4, 5, 6];
     } else if (position === "3") {
         frets = [2, 3, 4, 5, 6, 7];
     } else if (position === "7") {
         frets = [6, 7, 8, 9, 10, 11];
     } else if (position === "12") {
-        frets = [12, 13, 14, 15];
+        frets = [11, 12, 13, 14, 15, 16];
     } else {
         frets = [4, 5, 6, 7, 8, 9];
     }

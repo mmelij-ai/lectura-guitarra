@@ -203,40 +203,40 @@ body {
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* Inlay Markers (Puntos guías de Madre Perla centraditos entre cuerdas 3 y 4) */
+/* Inlay Markers — ubicados en el borde inferior del mástil para no colisionar con notas */
 .inlay-dot {
     position: absolute;
     width: 14px;
-    height: 14px; 
+    height: 14px;
     pointer-events: none;
-    z-index: 12; /* Ajustado para estar por encima de los trastes y detrás de las cuerdas */
+    z-index: 5; /* detrás de notas y cuerdas */
     display: flex;
     align-items: center;
     justify-content: center;
     transform: translate(-50%, -50%);
-    top: 50%; /* Centrado vertical exacto entre las 6 cuerdas */
+    top: 85%; /* parte inferior del contenedor, lejos de las cuerdas medias */
+    opacity: 0.45; /* más tenue para no confundir con notas */
 }
 
 .inlay-dot::after {
     content: '';
-    width: 11px;
-    height: 11px;
-    background: radial-gradient(circle, #f8fafc 0%, #cbd5e1 60%, #475569 100%);
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #94a3b8 0%, #475569 70%, #1e293b 100%);
     border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.9);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.6);
     border: 1px solid #0f172a;
     display: block;
 }
 
-/* Scorecard Final Overlay */
+/* Scorecard Final Overlay — fixed para cubrir toda la pantalla */
 .scorecard-modal {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: fixed;
+    inset: 0;
     background-color: rgba(9, 13, 22, 0.82);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 40;
-    border-radius: 24px;
+    z-index: 50;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -358,11 +358,11 @@ button {
     }
 }
 
-/* Selectores Dropdown Personalizados Estilo Marcelo Melipil */
-select {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    border: 1px solid #334155 !important;
+/* Selectores Dropdown Personalizados — sólo los del panel de configuración (.form-group) */
+.form-group select {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #334155;
     padding: 10px 12px;
     border-radius: 12px;
     font-size: 13px;
@@ -371,6 +371,7 @@ select {
     cursor: pointer;
     transition: all 0.2s ease;
 }
+/* El select de posición hereda su propio estilo de Tailwind (bg-transparent, text-cyan-400) */
 
 @media (min-width: 640px) {
     select {

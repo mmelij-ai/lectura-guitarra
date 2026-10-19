@@ -75,14 +75,17 @@ function updateFretboardLabels() {
         if (f5) f5.textContent = "Traste 9";
     }
 
-    // RESALTADO DE LOS 4 TRASTES DE LA POSICIÓN ACTIVA EN CAJA SEGURA
-    for (let i = 1; i <= 4; i++) {
+    // RESALTADO DE LOS TRASTES DE LA POSICIÓN ACTIVA
+    // La caja cubre las 6 columnas del pool (columnas 0-5 para 1ª pos., 1-6 para el resto)
+    const boxStart = (position === "1") ? 0 : 0; // todas las posiciones usan las 6 columnas del mástil
+    const boxEnd = 5;
+    for (let i = boxStart; i <= boxEnd; i++) {
         const box = document.getElementById(`fret-box-${i}`);
         if (box) {
-            box.style.backgroundColor = "rgba(34, 211, 238, 0.12)";
-            box.style.boxShadow = "inset 0 0 10px rgba(34, 211, 238, 0.15)";
-            if (i === 1) box.style.borderLeft = "3px solid #22d3ee";
-            if (i === 4) box.style.borderRight = "3px solid #22d3ee";
+            box.style.backgroundColor = "rgba(34, 211, 238, 0.10)";
+            box.style.boxShadow = "inset 0 0 10px rgba(34, 211, 238, 0.12)";
+            if (i === boxStart) box.style.borderLeft = "3px solid #22d3ee";
+            if (i === boxEnd) box.style.borderRight = "3px solid #22d3ee";
         }
     }
 
@@ -149,17 +152,18 @@ function renderScaleMarkers() {
     };
     for (let s = 1; s <= 6; s++) {
         // Verificamos si la escala ya dibuja esta nota de la cuerda al aire (solo relevante en Posición 1)
-        const hasScaleMarker = activePool.some(note => note.string === s && note.fret === 0) && (position === "1");
-        if (!hasScaleMarker) {
-            const yPosition = (s - 1) * stringStep;
-            const porcenHorizontal = (position === "1") ? 8.33 : -6;
-            const guide = document.createElement('div');
-            guide.style.left = `${porcenHorizontal}%`;
-            guide.style.top = `${yPosition}px`;
-            guide.textContent = openStringNotes[s];
-            // Caja cuadrada rounded-lg punteada sutil, indicando cuerda al aire libre de la escala
-            guide.className = "w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-dashed border-slate-700/50 bg-slate-950/20 text-slate-600 text-[11px] sm:text-[13px] font-bold flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-10 select-none";
-            container.appendChild(guide);
+        // Mostrar nombre de cuerda al aire sólo en 1ª posición (las demás no tienen cuerdas al aire en el pool)
+        if (position === "1") {
+            const hasScaleMarker = activePool.some(note => note.string === s && note.fret === 0);
+            if (!hasScaleMarker) {
+                const yPosition = (s - 1) * stringStep;
+                const guide = document.createElement('div');
+                guide.style.left = `8.33%`; // primera columna, dentro del mástil
+                guide.style.top = `${yPosition}px`;
+                guide.textContent = openStringNotes[s];
+                guide.className = "w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-dashed border-slate-700/50 bg-slate-950/20 text-slate-600 text-[11px] sm:text-[13px] font-bold flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-10 select-none";
+                container.appendChild(guide);
+            }
         }
     }
 
@@ -176,7 +180,7 @@ function renderScaleMarkers() {
 
         let porcenHorizontal;
         if (note.fret === 0) {
-            porcenHorizontal = (position === "1") ? 8.33 : -6;
+            porcenHorizontal = 8.33; // siempre en la primera columna
         } else {
             porcenHorizontal = (trasteIndex + 0.5) * 16.66;
         }
@@ -202,7 +206,7 @@ function renderScaleMarkers() {
         const shapeClass = isFret0 ? "rounded-lg border-dashed" : "rounded-full";
 
         if (isTonic) {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border-2 border-white bg-cyan-400 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_#22d3ee] z-25`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border-2 border-white bg-cyan-400 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_#22d3ee] z-[25]`;
         } else if (note.type === 'chord') {
             dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-blue-500/50 bg-slate-950/70 text-blue-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 shadow-[0_0_6px_rgba(59,130,246,0.3)] z-20`;
         } else if (note.type === 'tension') {
@@ -259,9 +263,9 @@ function updateFretboardMarker(note) {
     
     let porcenHorizontal;
     if (note.fret === 0) {
-        porcenHorizontal = (position === "1") ? 8.33 : -6;
+        porcenHorizontal = 8.33; // primera columna, siempre dentro del mástil
     } else {
-        porcenHorizontal = (trasteIndex + 0.5) * 16.66; 
+        porcenHorizontal = (trasteIndex + 0.5) * 16.66;
     }
     
     const stringsContainer = document.getElementById('stringsContainer');

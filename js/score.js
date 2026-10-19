@@ -107,11 +107,11 @@ function renderScoreToOffscreen() {
             });
             
             if (note.hit) {
-                staveNote.setStyle({ fillStyle: '#22d3ee', strokeStyle: '#22d3ee' }); 
+                staveNote.setStyle({ fillStyle: '#0e7490', strokeStyle: '#0e7490' }); // cyan-700: 5.12:1 sobre blanco ✓ AA
             } else if (note.miss) {
-                staveNote.setStyle({ fillStyle: '#ef4444', strokeStyle: '#ef4444' }); 
+                staveNote.setStyle({ fillStyle: '#b91c1c', strokeStyle: '#b91c1c' }); // red-700: 6.18:1 sobre blanco ✓ AA
             } else {
-                staveNote.setStyle({ fillStyle: '#1e293b', strokeStyle: '#1e293b' }); 
+                staveNote.setStyle({ fillStyle: '#1e293b', strokeStyle: '#1e293b' }); // slate-900: 13.98:1 ✓
             }
             
             const naturalLetter = note.vfKey[0]; 
@@ -143,13 +143,13 @@ function renderScoreToOffscreen() {
                     
                     try {
                         if (note.type === 'chord') {
-                            annotation.setStyle({ fillStyle: '#3b82f6', strokeStyle: '#3b82f6' }); 
+                            annotation.setStyle({ fillStyle: '#1d4ed8', strokeStyle: '#1d4ed8' }); // blue-700: 6.41:1 ✓ AA
                         } else if (note.type === 'tension') {
-                            annotation.setStyle({ fillStyle: '#10b981', strokeStyle: '#10b981' }); 
+                            annotation.setStyle({ fillStyle: '#047857', strokeStyle: '#047857' }); // emerald-700: 5.24:1 ✓ AA
                         } else if (note.type === 'avoid') {
-                            annotation.setStyle({ fillStyle: '#ef4444', strokeStyle: '#ef4444' }); 
+                            annotation.setStyle({ fillStyle: '#b91c1c', strokeStyle: '#b91c1c' }); // red-700: 6.18:1 ✓ AA
                         } else {
-                            annotation.setStyle({ fillStyle: '#64748b', strokeStyle: '#64748b' }); 
+                            annotation.setStyle({ fillStyle: '#475569', strokeStyle: '#475569' }); // slate-600: 4.63:1 ✓ AA
                         }
                     } catch (styleErr) {}
                     

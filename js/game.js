@@ -786,43 +786,37 @@ function processGuitarInput() {
         aciertosConsecutivos = Math.max(0, aciertosConsecutivos - 1);
     }
     
+    // Panel de diagnóstico (sólo visible si #debug no tiene class="hidden")
     const dbgEl = document.getElementById('debug');
-    if (dbgEl) {
+    if (dbgEl && !dbgEl.classList.contains('hidden')) {
         const volPercent = (rms * 1000).toFixed(0);
         if (rms > 0.010) {
             if (activeNote) {
                 const targetBeat = isSwingActive ? activeNote.swingStartBeat : activeNote.startBeat;
                 const onsetOffsetBeats = lastOnsetBeat - targetBeat;
                 const onsetOffsetMs = Math.round(onsetOffsetBeats * (60 / bpm) * 1000);
-                
-                dbgEl.innerHTML = `
-                    <div class="flex flex-col gap-1 text-slate-300 text-left">
-                        <div class="flex justify-between">
-                            <span>🎤 Entrada: Vol <strong class="text-cyan-400">${volPercent}</strong> (Mín: 10) | Filtro DSP Activo</span>
-                            <span>Objetivo: <strong class="text-cyan-400">${activeNote.nombre} (${activeNote.hz.toFixed(1)} Hz)</strong></span>
-                        </div>
-                        <div class="flex justify-between text-[11px] text-slate-400">
-                            <span>Frecuencia Leída: <strong class="text-amber-400">${hz > 0 ? hz.toFixed(1) + ' Hz' : 'Buscando pitch...'}</strong> (Onset: ${onsetOffsetMs > 0 ? '+' : ''}${onsetOffsetMs}ms)</span>
-                            <span>Desviación: <strong class="${Math.abs(deviationCents) < 75 ? 'text-emerald-400' : 'text-rose-400'}">${hz > 0 ? deviationCents.toFixed(0) + ' cents' : 'N/A'}</strong> (Match: ${aciertosConsecutivos}/3)</span>
-                        </div>
-                    </div>
-                `;
+                dbgEl.innerHTML = `🎤 Vol <strong>${volPercent}</strong> | Obj: <strong>${activeNote.nombre} (${activeNote.hz.toFixed(1)} Hz)</strong> | Frec: <strong>${hz > 0 ? hz.toFixed(1) + ' Hz' : '…'}</strong> | Onset: ${onsetOffsetMs > 0 ? '+' : ''}${onsetOffsetMs}ms | Dev: ${hz > 0 ? deviationCents.toFixed(0) + ' c' : 'N/A'} | Match: ${aciertosConsecutivos}/3`;
             } else {
-                dbgEl.innerHTML = `🎤 Entrada: Vol <strong class="text-cyan-400">${volPercent}</strong> (Mín: 10) | Pitch: <strong>${hz > 0 ? hz.toFixed(1) + ' Hz' : 'Buscando...'}</strong> | Sin nota activa`;
+                dbgEl.innerHTML = `🎤 Vol <strong>${volPercent}</strong> | Pitch: ${hz > 0 ? hz.toFixed(1) + ' Hz' : '…'} | sin nota activa`;
             }
         } else {
-            dbgEl.innerHTML = `🎤 Mic Activo: Vol <strong>${volPercent}</strong> (Silencio o por debajo del umbral mínimo de procesamiento 10)`;
+            dbgEl.textContent = `🎤 Mic activo: Vol ${volPercent} (bajo umbral)`;
         }
     }
-    
+
+    // Marcar notas expiradas como fallo — UN solo render al final si hubo cambios
+    let needsRender = false;
     generatedExercise.forEach(note => {
         const end = isSwingActive ? note.swingEndBeat : note.endBeat;
         if (currentBeat > end && !note.hit && !note.miss) {
             note.miss = true;
             misses++;
-            renderScoreToOffscreen();
+            needsRender = true;
         }
     });
+    if (needsRender) {
+        renderScoreToOffscreen();
+    }
 }
 
 function updateDashboardStats() {
