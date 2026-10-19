@@ -205,18 +205,40 @@ function renderScaleMarkers() {
 
         // Si es cuerda al aire (fret 0), usamos una caja rounded-lg y border-dashed
         const isFret0 = (note.fret === 0);
-        const shapeClass = isFret0 ? "rounded-lg border-dashed" : "rounded-full";
+        const shapeClass = isFret0 ? "rounded-lg" : "rounded-full";
+        const borderStyle = isFret0 ? "dashed" : "solid";
+
+        // Clases base (layout, posición) — colores via style inline para no depender del build de Tailwind
+        dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2`;
+        dot.style.position = 'absolute';
+        dot.style.zIndex = isTonic ? '25' : '20';
+        dot.style.borderStyle = borderStyle;
 
         if (isTonic) {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-300 bg-slate-100 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-[25]`;
+            dot.style.background = '#f1f5f9';      // slate-100
+            dot.style.borderColor = '#cbd5e1';     // slate-300
+            dot.style.borderWidth = '1.5px';
+            dot.style.color = '#0f172a';            // slate-950
         } else if (note.type === 'chord') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border-2 border-amber-400 bg-amber-700 text-amber-100 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.style.background = '#92400e';      // amber-800
+            dot.style.borderColor = '#f59e0b';     // amber-400
+            dot.style.borderWidth = '2px';
+            dot.style.color = '#fef3c7';            // amber-100
         } else if (note.type === 'tension') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-amber-600 bg-amber-800 text-amber-200 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.style.background = '#57534e';      // stone-600
+            dot.style.borderColor = '#d97706';     // amber-600
+            dot.style.borderWidth = '1.5px';
+            dot.style.color = '#fde68a';            // amber-200
         } else if (note.type === 'avoid') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-500 bg-slate-700 text-slate-300 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.style.background = '#374151';      // gray-700
+            dot.style.borderColor = '#6b7280';     // gray-500
+            dot.style.borderWidth = '1px';
+            dot.style.color = '#d1d5db';            // gray-300
         } else {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-500 bg-slate-700 text-slate-200 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.style.background = '#334155';      // slate-700
+            dot.style.borderColor = '#64748b';     // slate-500
+            dot.style.borderWidth = '1px';
+            dot.style.color = '#e2e8f0';            // slate-200
         }
 
         container.appendChild(dot);
@@ -285,20 +307,40 @@ function updateFretboardMarker(note) {
             textClasses = "text-[9px] sm:text-[10.5px] font-black tracking-tighter";
         }
 
-        // Si es cuerda al aire (fret 0), usamos una caja rounded-lg y border-dashed
+        // Si es cuerda al aire (fret 0), usamos una caja rounded-lg
         const isFret0 = (note.fret === 0);
-        const shapeClass = isFret0 ? "rounded-lg border-dashed" : "rounded-full";
+        const shapeClass = isFret0 ? "rounded-lg" : "rounded-full";
+        const borderStyle = isFret0 ? "dashed" : "solid";
+
+        // Clase base — colores via style inline
+        marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} z-30 font-bold`;
+        marker.style.borderStyle = borderStyle;
 
         if (note.midi % 12 === rootPitch) {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-slate-300 bg-slate-100 text-slate-950 z-30 font-black`;
+            marker.style.background = '#f1f5f9';
+            marker.style.borderColor = '#cbd5e1';
+            marker.style.borderWidth = '2px';
+            marker.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-amber-700 bg-amber-900/70 text-amber-300 z-30 font-bold`;
+            marker.style.background = '#92400e';
+            marker.style.borderColor = '#f59e0b';
+            marker.style.borderWidth = '2px';
+            marker.style.color = '#fef3c7';
         } else if (note.type === 'tension') {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-amber-800 bg-amber-900/50 text-amber-400 z-30 font-bold`;
+            marker.style.background = '#57534e';
+            marker.style.borderColor = '#d97706';
+            marker.style.borderWidth = '2px';
+            marker.style.color = '#fde68a';
         } else if (note.type === 'avoid') {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-slate-700 bg-slate-800/70 text-slate-400 z-30 font-bold`;
+            marker.style.background = '#374151';
+            marker.style.borderColor = '#6b7280';
+            marker.style.borderWidth = '1.5px';
+            marker.style.color = '#d1d5db';
         } else {
-            marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} border border-amber-700 bg-amber-900/70 text-amber-300 z-30 font-black`;
+            marker.style.background = '#334155';
+            marker.style.borderColor = '#64748b';
+            marker.style.borderWidth = '1.5px';
+            marker.style.color = '#e2e8f0';
         }
     }
 }
