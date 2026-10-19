@@ -215,30 +215,25 @@ function renderScaleMarkers() {
         dot.style.borderStyle = borderStyle;
 
         if (isTonic) {
-            dot.style.background = '#f1f5f9';      // slate-100
-            dot.style.borderColor = '#cbd5e1';     // slate-300
-            dot.style.borderWidth = '1.5px';
-            dot.style.color = '#0f172a';            // slate-950
+            dot.style.backgroundColor = '#f1f5f9';      // slate-100
+            dot.style.border = '1.5px solid #cbd5e1';
+            dot.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            dot.style.background = '#92400e';      // amber-800
-            dot.style.borderColor = '#f59e0b';     // amber-400
-            dot.style.borderWidth = '2px';
-            dot.style.color = '#fef3c7';            // amber-100
+            dot.style.backgroundColor = '#92400e';      // amber-800
+            dot.style.border = '2px solid #f59e0b';
+            dot.style.color = '#fef3c7';
         } else if (note.type === 'tension') {
-            dot.style.background = '#57534e';      // stone-600
-            dot.style.borderColor = '#d97706';     // amber-600
-            dot.style.borderWidth = '1.5px';
-            dot.style.color = '#fde68a';            // amber-200
+            dot.style.backgroundColor = '#57534e';      // stone-600
+            dot.style.border = '1.5px solid #d97706';
+            dot.style.color = '#fde68a';
         } else if (note.type === 'avoid') {
-            dot.style.background = '#374151';      // gray-700
-            dot.style.borderColor = '#6b7280';     // gray-500
-            dot.style.borderWidth = '1px';
-            dot.style.color = '#d1d5db';            // gray-300
+            dot.style.backgroundColor = '#374151';      // gray-700
+            dot.style.border = '1px solid #6b7280';
+            dot.style.color = '#d1d5db';
         } else {
-            dot.style.background = '#334155';      // slate-700
-            dot.style.borderColor = '#64748b';     // slate-500
-            dot.style.borderWidth = '1px';
-            dot.style.color = '#e2e8f0';            // slate-200
+            dot.style.backgroundColor = '#334155';      // slate-700
+            dot.style.border = '1px solid #64748b';
+            dot.style.color = '#e2e8f0';
         }
 
         container.appendChild(dot);
@@ -317,29 +312,24 @@ function updateFretboardMarker(note) {
         marker.style.borderStyle = borderStyle;
 
         if (note.midi % 12 === rootPitch) {
-            marker.style.background = '#f1f5f9';
-            marker.style.borderColor = '#cbd5e1';
-            marker.style.borderWidth = '2px';
+            marker.style.backgroundColor = '#f1f5f9';
+            marker.style.border = '2px solid #cbd5e1';
             marker.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            marker.style.background = '#92400e';
-            marker.style.borderColor = '#f59e0b';
-            marker.style.borderWidth = '2px';
+            marker.style.backgroundColor = '#92400e';
+            marker.style.border = '2px solid #f59e0b';
             marker.style.color = '#fef3c7';
         } else if (note.type === 'tension') {
-            marker.style.background = '#57534e';
-            marker.style.borderColor = '#d97706';
-            marker.style.borderWidth = '2px';
+            marker.style.backgroundColor = '#57534e';
+            marker.style.border = '2px solid #d97706';
             marker.style.color = '#fde68a';
         } else if (note.type === 'avoid') {
-            marker.style.background = '#374151';
-            marker.style.borderColor = '#6b7280';
-            marker.style.borderWidth = '1.5px';
+            marker.style.backgroundColor = '#374151';
+            marker.style.border = '1.5px solid #6b7280';
             marker.style.color = '#d1d5db';
         } else {
-            marker.style.background = '#334155';
-            marker.style.borderColor = '#64748b';
-            marker.style.borderWidth = '1.5px';
+            marker.style.backgroundColor = '#334155';
+            marker.style.border = '1.5px solid #64748b';
             marker.style.color = '#e2e8f0';
         }
     }
