@@ -208,15 +208,15 @@ function renderScaleMarkers() {
         const shapeClass = isFret0 ? "rounded-lg border-dashed" : "rounded-full";
 
         if (isTonic) {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-400 bg-slate-200 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-[25]`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-300 bg-slate-100 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-[25]`;
         } else if (note.type === 'chord') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-700 bg-slate-900/80 text-slate-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-500 bg-slate-800 text-slate-300 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else if (note.type === 'tension') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-700 bg-slate-900/80 text-slate-500 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-600 bg-slate-800 text-slate-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else if (note.type === 'avoid') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-800 bg-slate-950/70 text-slate-600 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-700 bg-slate-900 text-slate-500 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-800 bg-slate-950/50 text-slate-600 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-600 bg-slate-800 text-slate-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         }
 
         container.appendChild(dot);
