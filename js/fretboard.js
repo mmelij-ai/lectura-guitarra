@@ -208,32 +208,53 @@ function renderScaleMarkers() {
         const shapeClass = isFret0 ? "rounded-lg" : "rounded-full";
         const borderStyle = isFret0 ? "dashed" : "solid";
 
-        // Clases base (layout, posición) — colores via style inline para no depender del build de Tailwind
-        dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2`;
+        // Todo via style inline — sin depender de Tailwind
+        dot.className = '';
         dot.style.position = 'absolute';
+        dot.style.width = '32px';
+        dot.style.height = '32px';
+        dot.style.borderRadius = isFret0 ? '6px' : '50%';
+        dot.style.display = 'flex';
+        dot.style.alignItems = 'center';
+        dot.style.justifyContent = 'center';
+        dot.style.transform = 'translate(-50%, -50%)';
         dot.style.zIndex = isTonic ? '25' : '20';
-        dot.style.borderStyle = borderStyle;
+        dot.style.fontSize = displayText.length > 2 ? '9px' : '11px';
+        dot.style.fontWeight = '900';
+        dot.style.boxSizing = 'border-box';
+        dot.style.cursor = 'default';
+        dot.style.userSelect = 'none';
 
         if (isTonic) {
-            dot.style.backgroundColor = '#f1f5f9';      // slate-100
-            dot.style.border = '1.5px solid #cbd5e1';
+            dot.style.backgroundColor = '#e2e8f0';
+            dot.style.borderStyle = 'solid';
+            dot.style.borderWidth = '2px';
+            dot.style.borderColor = '#94a3b8';
             dot.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            dot.style.backgroundColor = '#92400e';      // amber-800
-            dot.style.border = '2px solid #f59e0b';
-            dot.style.color = '#fef3c7';
+            dot.style.backgroundColor = '#b45309';      // amber-700 más claro que antes
+            dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            dot.style.borderWidth = '2px';
+            dot.style.borderColor = '#fbbf24';
+            dot.style.color = '#fef9c3';
         } else if (note.type === 'tension') {
-            dot.style.backgroundColor = '#57534e';      // stone-600
-            dot.style.border = '1.5px solid #d97706';
-            dot.style.color = '#fde68a';
+            dot.style.backgroundColor = '#78716c';      // stone-500 más claro
+            dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            dot.style.borderWidth = '1.5px';
+            dot.style.borderColor = '#f59e0b';
+            dot.style.color = '#fef3c7';
         } else if (note.type === 'avoid') {
-            dot.style.backgroundColor = '#374151';      // gray-700
-            dot.style.border = '1px solid #6b7280';
-            dot.style.color = '#d1d5db';
+            dot.style.backgroundColor = '#4b5563';      // gray-600 más claro
+            dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            dot.style.borderWidth = '1px';
+            dot.style.borderColor = '#9ca3af';
+            dot.style.color = '#f3f4f6';
         } else {
-            dot.style.backgroundColor = '#334155';      // slate-700
-            dot.style.border = '1px solid #64748b';
-            dot.style.color = '#e2e8f0';
+            dot.style.backgroundColor = '#475569';      // slate-600 más claro
+            dot.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            dot.style.borderWidth = '1px';
+            dot.style.borderColor = '#94a3b8';
+            dot.style.color = '#f1f5f9';
         }
 
         container.appendChild(dot);
@@ -297,40 +318,47 @@ function updateFretboardMarker(note) {
         const displayText = (window.viewMode === 'intervals') ? (note.interval || '?') : noteNameOnly;
         marker.textContent = displayText;
 
-        let textClasses = "text-[11px] sm:text-[13px] font-black";
-        if (displayText.length > 2) {
-            textClasses = "text-[9px] sm:text-[10.5px] font-black tracking-tighter";
-        }
-
-        // Si es cuerda al aire (fret 0), usamos una caja rounded-lg
         const isFret0 = (note.fret === 0);
-        const shapeClass = isFret0 ? "rounded-lg" : "rounded-full";
-        const borderStyle = isFret0 ? "dashed" : "solid";
 
-        // Clase base — colores via style inline
-        marker.className = `note-marker w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} ${textClasses} z-30 font-bold`;
-        marker.style.borderStyle = borderStyle;
+        // Todo via style inline — sin depender de Tailwind
+        marker.className = 'note-marker';
+        marker.style.width = '32px';
+        marker.style.height = '32px';
+        marker.style.borderRadius = isFret0 ? '6px' : '50%';
+        marker.style.fontSize = displayText.length > 2 ? '9px' : '11px';
+        marker.style.fontWeight = '900';
+        marker.style.boxSizing = 'border-box';
 
         if (note.midi % 12 === rootPitch) {
-            marker.style.backgroundColor = '#f1f5f9';
-            marker.style.border = '2px solid #cbd5e1';
+            marker.style.backgroundColor = '#e2e8f0';
+            marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            marker.style.borderWidth = '2px';
+            marker.style.borderColor = '#94a3b8';
             marker.style.color = '#0f172a';
         } else if (note.type === 'chord') {
-            marker.style.backgroundColor = '#92400e';
-            marker.style.border = '2px solid #f59e0b';
-            marker.style.color = '#fef3c7';
+            marker.style.backgroundColor = '#b45309';
+            marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            marker.style.borderWidth = '2px';
+            marker.style.borderColor = '#fbbf24';
+            marker.style.color = '#fef9c3';
         } else if (note.type === 'tension') {
-            marker.style.backgroundColor = '#57534e';
-            marker.style.border = '2px solid #d97706';
-            marker.style.color = '#fde68a';
+            marker.style.backgroundColor = '#78716c';
+            marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            marker.style.borderWidth = '1.5px';
+            marker.style.borderColor = '#f59e0b';
+            marker.style.color = '#fef3c7';
         } else if (note.type === 'avoid') {
-            marker.style.backgroundColor = '#374151';
-            marker.style.border = '1.5px solid #6b7280';
-            marker.style.color = '#d1d5db';
+            marker.style.backgroundColor = '#4b5563';
+            marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            marker.style.borderWidth = '1px';
+            marker.style.borderColor = '#9ca3af';
+            marker.style.color = '#f3f4f6';
         } else {
-            marker.style.backgroundColor = '#334155';
-            marker.style.border = '1.5px solid #64748b';
-            marker.style.color = '#e2e8f0';
+            marker.style.backgroundColor = '#475569';
+            marker.style.borderStyle = isFret0 ? 'dashed' : 'solid';
+            marker.style.borderWidth = '1px';
+            marker.style.borderColor = '#94a3b8';
+            marker.style.color = '#f1f5f9';
         }
     }
 }
