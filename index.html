@@ -84,18 +84,24 @@
                     <div class="form-group flex flex-col gap-2">
                         <label for="tonicSelect" class="text-xs font-bold uppercase tracking-widest text-slate-400">Tónica (Fundamental)</label>
                         <select id="tonicSelect" onchange="window.triggerRegenerate()">
-                            <option value="C" selected>Do</option>
-                            <option value="C#">Do#</option>
-                            <option value="D">Re</option>
-                            <option value="Eb">Mib</option>
-                            <option value="E">Mi</option>
-                            <option value="F">Fa</option>
-                            <option value="F#">Fa#</option>
-                            <option value="G">Sol</option>
-                            <option value="Ab">Lab</option>
-                            <option value="A">La</option>
-                            <option value="Bb">Sib</option>
-                            <option value="B">Si</option>
+                            <optgroup label="Bemoles">
+                                <option value="C" selected>Do (C)</option>
+                                <option value="F">Fa (F)</option>
+                                <option value="Bb">Sib (B♭)</option>
+                                <option value="Eb">Mib (E♭)</option>
+                                <option value="Ab">Lab (A♭)</option>
+                                <option value="Db">Reb (D♭)</option>
+                                <option value="Gb">Solb (G♭)</option>
+                            </optgroup>
+                            <optgroup label="Sostenidos">
+                                <option value="G">Sol (G)</option>
+                                <option value="D">Re (D)</option>
+                                <option value="A">La (A)</option>
+                                <option value="E">Mi (E)</option>
+                                <option value="B">Si (B)</option>
+                                <option value="F#">Fa# (F#)</option>
+                                <option value="C#">Do# (C#)</option>
+                            </optgroup>
                         </select>
                     </div>
 
@@ -163,6 +169,21 @@
                         </select>
                     </div>
 
+                    <!-- Opciones de generación -->
+                    <div class="form-group flex flex-col gap-2 col-span-1 justify-center">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Opciones</label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="startOnTonicCheck" checked onchange="window.triggerRegenerate()"
+                                class="w-4 h-4 rounded accent-cyan-500 cursor-pointer">
+                            <span class="text-sm text-slate-300">Empezar en tónica</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none mt-1">
+                            <input type="checkbox" id="practicalSpellingCheck" onchange="window.triggerRegenerate()"
+                                class="w-4 h-4 rounded accent-cyan-500 cursor-pointer">
+                            <span class="text-sm text-slate-300">Grafía práctica (sin bb/##)</span>
+                        </label>
+                    </div>
+
                     <div class="form-group flex flex-col gap-2 col-span-1">
                         <div class="flex justify-between items-center">
                             <label for="bpmSlider" class="text-xs font-bold uppercase tracking-widest text-slate-400">Velocidad (BPM)</label>
@@ -178,6 +199,16 @@
                             <option value="1">Corregir Navegador (+1 semitono)</option>
                             <option value="-1">Guitarra en Mi♭ / Eb (Half-step)</option>
                         </select>
+                    </div>
+
+                    <div class="form-group flex flex-col gap-2 col-span-1 sm:col-span-2 lg:col-span-1">
+                        <div class="flex justify-between items-center">
+                            <label for="latencySlider" class="text-xs font-bold uppercase tracking-widest text-slate-400">Latencia Micrófono</label>
+                            <span id="latencyVal" class="text-cyan-400 text-xs font-bold">0 ms</span>
+                        </div>
+                        <input type="range" id="latencySlider" min="-200" max="200" step="10" value="0"
+                            class="w-full h-[44px] accent-cyan-500 cursor-pointer">
+                        <p class="text-[10px] text-slate-500 mt-0.5">Ajusta si el sistema acredita notas tarde (+) o temprano (−)</p>
                     </div>
 
                     <!-- Prueba de Entrada de Audio -->

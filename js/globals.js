@@ -7,6 +7,7 @@ let currentBeat = 0;
 let totalBeats = 16;
 let bpm = 80;
 let calibracionSemitonos = 0; // Por defecto 0 para afinación estándar Mi/E directa
+let latencyMs = 0;            // Compensación de latencia de micrófono en milisegundos
 let hits = 0;
 let misses = 0;
 
@@ -73,6 +74,15 @@ const calSelect = document.getElementById('calibrationSelect');
 if (calSelect) {
     calSelect.addEventListener('change', (e) => {
         calibracionSemitonos = parseInt(e.target.value);
+    });
+}
+
+const latencySlider = document.getElementById('latencySlider');
+const latencyValEl = document.getElementById('latencyVal');
+if (latencySlider) {
+    latencySlider.addEventListener('input', (e) => {
+        latencyMs = parseInt(e.target.value);
+        if (latencyValEl) latencyValEl.textContent = `${latencyMs > 0 ? '+' : ''}${latencyMs} ms`;
     });
 }
 

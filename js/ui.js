@@ -188,23 +188,89 @@ window.addEventListener('resize', () => {
 });
 
 // ==========================================
+// PERSISTENCIA DE CONFIGURACIÓN (localStorage)
+// ==========================================
+const STORAGE_KEY = 'lectura-guitarra-config';
+
+const CONFIG_FIELDS = [
+    'tonicSelect', 'scaleSelect', 'positionSelect', 'difficultySelect',
+    'rhythmSelect', 'grooveSelect', 'barsSelect', 'calibrationSelect', 'bpmSlider',
+    'latencySlider'
+];
+// Checkboxes se persisten por separado (valor booleano)
+const CONFIG_CHECKS = ['startOnTonicCheck', 'practicalSpellingCheck'];
+
+function saveConfig() {
+    try {
+        const cfg = {};
+        CONFIG_FIELDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) cfg[id] = el.value;
+        });
+        CONFIG_CHECKS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) cfg[id] = el.checked;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    } catch(e) { /* privado/bloqueado — ignorar */ }
+}
+
+function loadConfig() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const cfg = JSON.parse(raw);
+        CONFIG_FIELDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && cfg[id] !== undefined) {
+                el.value = cfg[id];
+                if (id === 'bpmSlider') {
+                    bpm = parseInt(cfg[id]);
+                    const bpmVal = document.getElementById('bpmVal');
+                    if (bpmVal) bpmVal.textContent = `${bpm} BPM`;
+                }
+                if (id === 'calibrationSelect') {
+                    calibracionSemitonos = parseInt(cfg[id]);
+                }
+                if (id === 'latencySlider') {
+                    latencyMs = parseInt(cfg[id]);
+                    const latencyValEl = document.getElementById('latencyVal');
+                    if (latencyValEl) latencyValEl.textContent = `${latencyMs > 0 ? '+' : ''}${latencyMs} ms`;
+                }
+            }
+        });
+        CONFIG_CHECKS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && cfg[id] !== undefined) el.checked = cfg[id];
+        });
+    } catch(e) { /* JSON corrupto — ignorar */ }
+}
+
+// Guardar al cambiar cualquier campo de configuración
+CONFIG_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        const evt = (el.tagName === 'INPUT') ? 'input' : 'change';
+        el.addEventListener(evt, saveConfig);
+    }
+});
+CONFIG_CHECKS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', saveConfig);
+});
+
+// ==========================================
 // INICIALIZACIÓN DE LA APLICACIÓN
 // ==========================================
 function initApp() {
-    const VF = typeof Vex !== 'undefined' ? Vex.Flow : null;
-    if (VF) {
-        document.getElementById('debug').textContent = "VexFlow loaded. ¡Entrenamiento profesional de guitarra activo!";
-    } else {
-        document.getElementById('debug').textContent = "VexFlow no se pudo detectar en la carga inicial.";
-    }
-    
+    // Restaurar configuración guardada antes de generar el primer ejercicio
+    loadConfig();
+
     const panel = document.getElementById('config-panel');
     const chevron = document.getElementById('config-chevron');
     if (panel) {
         panel.classList.add('hidden');
-        if (chevron) {
-            chevron.classList.remove('rotate-180');
-        }
+        if (chevron) chevron.classList.remove('rotate-180');
     }
 
     generateExerciseSequence();

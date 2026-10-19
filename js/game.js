@@ -542,9 +542,12 @@ function generateExerciseSequence() {
                 let randomNote = null;
                 
                 if (generatedExercise.length === 0) {
-                    const roots = activePool.filter(n => n.interval === "1");
-                    if (roots.length > 0) {
-                        randomNote = roots[Math.floor(Math.random() * roots.length)];
+                    const startOnTonic = document.getElementById('startOnTonicCheck');
+                    if (!startOnTonic || startOnTonic.checked) {
+                        const roots = activePool.filter(n => n.interval === "1");
+                        if (roots.length > 0) {
+                            randomNote = roots[Math.floor(Math.random() * roots.length)];
+                        }
                     }
                 }
                 
@@ -672,7 +675,9 @@ function processGuitarInput() {
     if (rms > 0.010) {
         if (!isAudioActive || (rms > lastRms * 1.4 && lastRms > 0.005)) {
             isAudioActive = true;
-            lastOnsetBeat = currentBeat;
+            // Compensar latencia: latencyMs positivo = mic tarda → restar para adelantar el onset
+            const latencyBeats = (latencyMs / 1000) * (bpm / 60);
+            lastOnsetBeat = currentBeat - latencyBeats;
         }
     } else {
         isAudioActive = false;

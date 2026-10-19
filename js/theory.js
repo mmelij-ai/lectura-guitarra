@@ -114,13 +114,30 @@ function buildDynamicNotePool() {
     
     const formula = scaleFormulas[scaleType] || scaleFormulas.mayor;
     const scaleNotes = []; // Guardará { pitchClass, letterChar, accidental, spelledName, interval, type }
-    
+
+    // Mapa enarmónico para reescribir dobles alteraciones a grafía práctica
+    const ENHARMONIC_MAP = {
+        // bb → natural enarmónico
+        'Cbb': 'Bb', 'Dbb': 'C',  'Ebb': 'D',  'Fbb': 'Eb',
+        'Gbb': 'F',  'Abb': 'G',  'Bbb': 'Ab',
+        // ## → natural enarmónico
+        'C##': 'D',  'D##': 'E',  'E##': 'F#', 'F##': 'G',
+        'G##': 'A',  'A##': 'B',  'B##': 'C#'
+    };
+
+    const practicalSpellingEl = document.getElementById('practicalSpellingCheck');
+    const usePracticalSpelling = practicalSpellingEl && practicalSpellingEl.checked;
+
     formula.forEach(symbol => {
-        const spelledName = getSpelledNote(tonic, symbol);
+        let spelledName = getSpelledNote(tonic, symbol);
+        // Aplicar grafía práctica si está activada (reemplaza bb/## por enarmónicas simples)
+        if (usePracticalSpelling && ENHARMONIC_MAP[spelledName]) {
+            spelledName = ENHARMONIC_MAP[spelledName];
+        }
         const letter = spelledName.charAt(0).toLowerCase();
         const accidental = spelledName.slice(1);
         const pitchClass = getNoteSemitone(spelledName);
-        
+
         scaleNotes.push({
             pitchClass: pitchClass,
             letter: letter,
