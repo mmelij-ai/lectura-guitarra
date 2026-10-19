@@ -493,8 +493,12 @@ async function startRealPractice() {
 // ─── Control de saltos ───────────────────────────────────────────────────────
 // Máximo intervalo permitido por dificultad (en semitonos).
 // Un salto mayor se permite con probabilidad LEAP_CHANCE (excepción expresiva).
+// ─── Control de saltos ───────────────────────────────────────────────────────
+// Máximo intervalo permitido por dificultad (en semitonos).
 const MAX_LEAP = { basic: 5, normal: 9, intermediate: 9, advanced: 14 };
-const LEAP_CHANCE = 0.05; // 5 % de las veces se permite un salto mayor
+// Probabilidad de que se permita un salto mayor como excepción expresiva.
+// Solo se evalúa cuando ya hay candidatos dentro del rango — no es un OR con vacío.
+const LEAP_CHANCE = 0.02; // 2 % de las veces
 
 /**
  * Selecciona la siguiente nota aplicando:
@@ -508,7 +512,7 @@ function selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourB
     }
 
     const lastMidi = lastNote.midi;
-    const maxLeap  = MAX_LEAP[difficulty] ?? MAX_LEAP.intermediate;
+    const maxLeap  = MAX_LEAP[difficulty] ?? MAX_LEAP.normal;
 
     // Candidatos dentro del rango de salto aceptable (excluyendo la nota actual)
     let candidates = activePool.filter(n =>
@@ -516,45 +520,47 @@ function selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourB
         Math.abs(n.midi - lastMidi) <= maxLeap
     );
 
-    // Si el pool queda vacío (escala muy pequeña) o cae el dado del salto expresivo,
-    // abrir a cualquier nota (sin repetición de la misma)
-    if (candidates.length === 0 || Math.random() < LEAP_CHANCE) {
+    // Fallback si el pool filtrado queda vacío (escala muy pequeña)
+    if (candidates.length === 0) {
         candidates = activePool.filter(n => n.midi !== lastMidi);
+    }
+
+    // Excepción expresiva: con baja probabilidad abrir a salto mayor.
+    // Solo se evalúa cuando ya hay candidatos válidos (no acumula sobre vacío).
+    if (candidates.length > 0 && Math.random() < LEAP_CHANCE) {
+        const wider = activePool.filter(n => n.midi !== lastMidi);
+        if (wider.length > 0) candidates = wider;
     }
 
     // Fallback final: usar todo el pool
     if (candidates.length === 0) candidates = activePool;
 
     // ── Contorno melódico: asignar pesos según posición MIDI relativa ──────
-    // Cuando contourBias > 0 queremos notas más agudas → mayor peso a midi alto.
-    // Cuando contourBias < 0 queremos notas más graves → mayor peso a midi bajo.
-    // El peso base es 1; el modificador escala linealmente con la distancia desde
-    // la mediana del pool, amplificada por |contourBias|.
+    // bias > 0 → notas más agudas pesan más; bias < 0 → notas más graves pesan más.
+    // Fórmula: weight = 1 + |bias| * directedPos
+    //   donde directedPos = normalizedPos si bias > 0, (1 - normalizedPos) si bias < 0.
+    // Así el peso SIEMPRE crece para las notas en la dirección deseada.
     if (Math.abs(contourBias) > 0.05) {
         const midiValues = candidates.map(n => n.midi);
         const midiMin = Math.min(...midiValues);
         const midiMax = Math.max(...midiValues);
         const midiRange = midiMax - midiMin || 1;
 
-        candidates = candidates.map(n => {
-            // normalizedPos ∈ [0,1]: 0 = nota más grave, 1 = más aguda
-            const normalizedPos = (n.midi - midiMin) / midiRange;
-            // Si bias > 0: notas agudas (normalizedPos alto) reciben más peso
-            // Si bias < 0: notas graves (normalizedPos bajo) reciben más peso
-            const weight = 1 + contourBias * (contourBias > 0
-                ? normalizedPos            // sesgo hacia agudos
-                : (1 - normalizedPos));    // sesgo hacia graves
-            return { note: n, weight: Math.max(0.1, weight) };
+        const weighted = candidates.map(n => {
+            const normalizedPos = (n.midi - midiMin) / midiRange; // [0,1]
+            const directedPos   = contourBias > 0 ? normalizedPos : (1 - normalizedPos);
+            const weight        = 1 + Math.abs(contourBias) * directedPos;
+            return { note: n, weight };
         });
 
         // Selección ponderada
-        const totalWeight = candidates.reduce((s, c) => s + c.weight, 0);
+        const totalWeight = weighted.reduce((s, c) => s + c.weight, 0);
         let r = Math.random() * totalWeight;
-        for (const c of candidates) {
+        for (const c of weighted) {
             r -= c.weight;
             if (r <= 0) return c.note;
         }
-        return candidates[candidates.length - 1].note;
+        return weighted[weighted.length - 1].note;
     }
 
     // Sin sesgo: uniforme
