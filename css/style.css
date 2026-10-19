@@ -160,7 +160,7 @@ body {
 
 .fret-line {
     height: 100%;
-    border-right: 1px solid #1e2535;
+    border-right: 1px solid #2e3a50;
     transition: background-color 0.2s ease, border 0.2s ease;
 }
 
@@ -210,16 +210,16 @@ body {
     justify-content: center;
     transform: translate(-50%, -50%);
     top: 85%;
-    opacity: 0.5;
+    opacity: 0.8;
 }
 
 .inlay-dot::after {
     content: '';
     width: 6px;
     height: 6px;
-    background: #1e293b;
+    background: #4a5568;
     border-radius: 50%;
-    border: 1px solid #2d3748;
+    border: 1px solid #718096;
     display: block;
 }
 

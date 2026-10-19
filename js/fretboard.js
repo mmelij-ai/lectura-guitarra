@@ -26,7 +26,7 @@ function updateFretboardLabels() {
         box.style.boxShadow = '';
         box.classList.remove('bg-cyan-500/10');
         if (idx < 5) {
-            box.style.borderRight = "1px solid #1e2535";
+            box.style.borderRight = "1px solid #2e3a50";
         } else {
             box.style.borderRight = '';
         }
@@ -210,9 +210,9 @@ function renderScaleMarkers() {
         if (isTonic) {
             dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-300 bg-slate-100 text-slate-950 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-[25]`;
         } else if (note.type === 'chord') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-500 bg-slate-800 text-slate-300 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-amber-700 bg-amber-950 text-amber-300 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else if (note.type === 'tension') {
-            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-600 bg-slate-800 text-slate-400 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
+            dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-amber-900 bg-slate-900 text-amber-600 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else if (note.type === 'avoid') {
             dot.className = `w-8 h-8 sm:w-10 sm:h-10 ${shapeClass} border border-slate-700 bg-slate-900 text-slate-500 ${textClasses} flex items-center justify-center absolute -translate-x-1/2 -translate-y-1/2 z-20`;
         } else {
