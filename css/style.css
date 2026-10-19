@@ -118,8 +118,8 @@ body {
 
 /* Diapasón de Guitarra — Diseño Sobrio */
 .fretboard {
-    background: #12151e;
-    border: 1px solid #1e2535;
+    background: #1c2035;
+    border: 1px solid #2e3a50;
     border-radius: 8px;
     padding: 32px 0 24px 0;
     position: relative;
@@ -198,28 +198,28 @@ body {
     /* sin animation */
 }
 
-/* Inlay Markers — puntos mínimos */
+/* Inlay Markers — puntos de referencia del mástil */
 .inlay-dot {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 16px;
+    height: 16px;
     pointer-events: none;
     z-index: 5;
     display: flex;
     align-items: center;
     justify-content: center;
     transform: translate(-50%, -50%);
-    top: 85%;
-    opacity: 0.8;
+    top: 50%;
+    opacity: 1;
 }
 
 .inlay-dot::after {
     content: '';
-    width: 6px;
-    height: 6px;
-    background: #4a5568;
+    width: 10px;
+    height: 10px;
+    background: #3a4560;
     border-radius: 50%;
-    border: 1px solid #718096;
+    border: 1px solid #5a6a8a;
     display: block;
 }
 
