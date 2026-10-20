@@ -79,7 +79,11 @@ const getSpelledNote = (rootName, intervalSymbol) => {
 const getNoteType = (symbol) => {
   if (symbol.startsWith('S')) return 'avoid';
   if (symbol.startsWith('T')) return 'tension';
-  return 'chord';
+  // Notas del acorde: 1, 3, b3, 5, b5, 7, b7, °7, etc. (sin prefijo S ni T)
+  // Se distinguen chord (pertenecen al acorde) de scale (solo escala)
+  const chordTones = ['1', '3', 'b3', '5', 'b5', '7', 'b7', '°7', '#5', 'b9'];
+  if (chordTones.includes(symbol)) return 'chord';
+  return 'scale';
 };
 
 const scaleFormulas = {
