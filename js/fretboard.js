@@ -266,6 +266,7 @@ function renderScaleMarkers() {
 
 function updateFretboardMarker(note) {
     const marker = document.getElementById('neckMarker');
+    const badge = document.getElementById('fingeringBadge');
     const tipText = document.getElementById('tipText');
     const positionEl = document.getElementById('positionSelect');
     const tonicEl = document.getElementById('tonicSelect');
@@ -276,6 +277,7 @@ function updateFretboardMarker(note) {
 
     if (!note) {
         if (marker) marker.style.display = 'none';
+        if (badge) badge.style.display = 'none';
         const positionNames = {
             "1": "1ª Posición",
             "2": "2ª Posición",
@@ -288,7 +290,7 @@ function updateFretboardMarker(note) {
         if (tipText) tipText.textContent = `${posName}`;
         return;
     }
-    
+
     if (tipText) tipText.textContent = note.tip;
     
     let baseFret;
@@ -365,5 +367,16 @@ function updateFretboardMarker(note) {
             marker.style.borderColor = '#ffffff';
             marker.style.color = '#f1f5f9';
         }
+    }
+
+    // Badge de digitación flotante junto al marcador
+    if (badge && note.tip) {
+        badge.textContent = note.tip;
+        badge.style.left = `${porcenHorizontal}%`;
+        badge.style.top = `${yPosition}px`;
+        // Ajustar offset horizontal: si está en la mitad derecha, mostrar a la izquierda
+        const offsetX = porcenHorizontal > 60 ? 'calc(-100% - 14px)' : '14px';
+        badge.style.transform = `translate(${offsetX}, -50%)`;
+        badge.style.display = 'block';
     }
 }

@@ -327,6 +327,8 @@
                 <!-- Capa Absoluta para el marcador activo de lectura -->
                 <div id="activeMarkerContainer" class="absolute inset-0 pointer-events-none z-30">
                     <div id="neckMarker" class="note-marker w-8 h-8 sm:w-10 sm:h-10 text-[11px] sm:text-[13px]" style="display: none;"></div>
+                    <!-- Badge de digitación junto al marcador activo -->
+                    <div id="fingeringBadge" style="display:none; position:absolute; transform:translate(12px, -50%); background:rgba(15,23,42,0.92); border:1px solid rgba(34,211,238,0.4); border-radius:6px; padding:2px 6px; font-size:9px; font-weight:800; color:#22d3ee; white-space:nowrap; letter-spacing:0.05em; text-transform:uppercase; pointer-events:none; z-index:35;"></div>
                 </div>
 
                 <div class="string" id="string1" style="height:1px;"></div>
@@ -474,7 +476,7 @@
 <script src="js/globals.js"></script>
 <script src="js/theory.js?v=2"></script>
 <script src="js/audio.js"></script>
-<script src="js/fretboard.js?v=10"></script>
+<script src="js/fretboard.js?v=11"></script>
 <script src="js/score.js"></script>
 <script src="js/game.js?v=2"></script>
 <script src="js/ui.js"></script>
