@@ -285,7 +285,7 @@ function updateFretboardMarker(note) {
             "12": "12ª Posición"
         };
         const posName = positionNames[position] || `${position}ª Posición`;
-        if (tipText) tipText.textContent = `Estudio ${posName} | Estudia la partitura o dale play a la escucha sugerida`;
+        if (tipText) tipText.textContent = `${posName}`;
         return;
     }
     
