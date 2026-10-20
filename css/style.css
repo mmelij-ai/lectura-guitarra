@@ -411,13 +411,19 @@ option {
         border-width: 3px;
     }
 
-    /* Diapasón: altura reducida para caber en pantalla */
+    /* Diapasón: ocultar labels de traste para ganar altura */
+    .fret-labels {
+        display: none !important;
+    }
+
+    /* Diapasón: padding mínimo sin labels */
     .fretboard {
-        padding: 20px 0 14px 0 !important;
+        padding: 12px 0 8px 0 !important;
         margin-bottom: 0 !important;
     }
 
+    /* Cuerdas: más alto para que los dots no se solapen */
     .strings-container {
-        height: 110px !important;
+        height: 130px !important;
     }
 }

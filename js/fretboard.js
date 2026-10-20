@@ -142,6 +142,9 @@ function renderScaleMarkers() {
     const stringsContainer = document.getElementById('stringsContainer');
     const containerHeight = stringsContainer ? stringsContainer.clientHeight : 120;
     const stringStep = containerHeight / 5;
+    // Dot adaptativo: máximo 32px, pero nunca mayor al 82% del espacio entre cuerdas
+    const dotSize = Math.round(Math.min(32, stringStep * 0.82));
+    const dotFontBase = Math.max(7, Math.round(dotSize * 0.38));   // fuente proporcional
 
     // RENDERIZAR GUÍAS VISUALES DE CUERDAS AL AIRE EN LA COLUMNA 0 O A LA IZQUIERDA (Para todas las posiciones)
     const openStringNotes = {
@@ -211,15 +214,15 @@ function renderScaleMarkers() {
         // Todo via style inline — sin depender de Tailwind
         dot.className = '';
         dot.style.position = 'absolute';
-        dot.style.width = '32px';
-        dot.style.height = '32px';
+        dot.style.width = dotSize + 'px';
+        dot.style.height = dotSize + 'px';
         dot.style.borderRadius = isFret0 ? '6px' : '50%';
         dot.style.display = 'flex';
         dot.style.alignItems = 'center';
         dot.style.justifyContent = 'center';
         dot.style.transform = 'translate(-50%, -50%)';
         dot.style.zIndex = isTonic ? '25' : '20';
-        dot.style.fontSize = displayText.length > 2 ? '9px' : '11px';
+        dot.style.fontSize = (displayText.length > 2 ? Math.max(6, dotFontBase - 1) : dotFontBase) + 'px';
         dot.style.fontWeight = '900';
         dot.style.boxSizing = 'border-box';
         dot.style.cursor = 'default';
@@ -308,7 +311,9 @@ function updateFretboardMarker(note) {
     const containerHeight = stringsContainer ? stringsContainer.clientHeight : 120;
     const stringStep = containerHeight / 5;
     const yPosition = (note.string - 1) * stringStep;
-    
+    const mDotSize = Math.round(Math.min(32, stringStep * 0.82));
+    const mFontBase = Math.max(7, Math.round(mDotSize * 0.38));
+
     if (marker) {
         marker.style.left = `${porcenHorizontal}%`;
         marker.style.top = `${yPosition}px`;
@@ -322,10 +327,10 @@ function updateFretboardMarker(note) {
 
         // Todo via style inline — sin depender de Tailwind
         marker.className = 'note-marker';
-        marker.style.width = '32px';
-        marker.style.height = '32px';
+        marker.style.width = mDotSize + 'px';
+        marker.style.height = mDotSize + 'px';
         marker.style.borderRadius = isFret0 ? '6px' : '50%';
-        marker.style.fontSize = displayText.length > 2 ? '9px' : '11px';
+        marker.style.fontSize = (displayText.length > 2 ? Math.max(6, mFontBase - 1) : mFontBase) + 'px';
         marker.style.fontWeight = '900';
         marker.style.boxSizing = 'border-box';
 
