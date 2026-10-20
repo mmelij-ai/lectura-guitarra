@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="vendor/tailwind.css">
     <script src="vendor/vexflow.js"></script>
     <script src="vendor/Tone.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=6">
+    <link rel="stylesheet" href="css/style.css?v=7">
     <!-- Icono inline para evitar el error 404 de favicon.ico en la consola -->
     <link rel="icon" href="data:,">
 </head>
@@ -305,45 +305,6 @@
             <div id="countdownOverlay">4</div>
         </div>
 
-        <!-- Cabecera del Diapasón con Selector de Notas / Intervalos (Sleek Glassmorphism Control) -->
-        <div class="fretboard-header flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 bg-slate-900/40 backdrop-blur-sm p-3 rounded-2xl border border-slate-800/80">
-            <div class="flex items-center gap-2.5 self-start sm:self-auto">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-                </span>
-                <span id="tipText" class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-cyan-400">Selecciona o reproduce una nota para ver su posición</span>
-            </div>
-            
-            <!-- Selector de Posición y Notas vs Intervalos sobre el Mástil -->
-            <div class="flex items-center gap-3 flex-wrap justify-center self-stretch sm:self-auto">
-                 <!-- Selector de Posición siempre visible -->
-                 <div class="flex items-center gap-1.5 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800/60 shadow-lg shadow-black/40">
-                     <label for="positionSelect" class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Posición:</label>
-                     <select id="positionSelect" onchange="window.triggerRegenerate()" class="bg-transparent text-cyan-400 font-extrabold text-[10px] sm:text-xs focus:outline-none border-none cursor-pointer p-0">
-                         <option value="1" class="bg-slate-950 text-slate-300">1ª Posición (Trastes 0-5)</option>
-                         <option value="2" class="bg-slate-950 text-slate-300">2ª Posición (Trastes 1-6)</option>
-                         <option value="3" class="bg-slate-950 text-slate-300">3ª Posición (Trastes 2-7)</option>
-                         <option value="5" class="bg-slate-950 text-slate-300" selected>5ª Posición (Trastes 4-9)</option>
-                         <option value="7" class="bg-slate-950 text-slate-300">7ª Posición (Trastes 6-11)</option>
-                         <option value="12" class="bg-slate-950 text-slate-300">12ª Posición (Trastes 11-16)</option>
-                     </select>
-                 </div>
-
-                 <!-- Selector Notas vs Intervalos -->
-                 <div class="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800/60 shadow-lg shadow-black/40">
-                      <button id="viewNotesBtn" onclick="window.setViewMode('notes')" class="px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all duration-300 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)] focus:outline-none">
-                          Notas
-                      </button>
-                      <button id="viewIntervalsBtn" onclick="window.setViewMode('intervals')" class="px-4 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all duration-300 text-slate-400 hover:text-slate-200 hover:bg-slate-800/20 focus:outline-none">
-                          Intervalos
-                      </button>
-                 </div>
-            </div>
-            
-            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 hidden md:inline">Sugerencia de digitación</span>
-        </div>
-
         <div class="fretboard relative pt-8 pb-6 sm:pt-10 sm:pb-8 px-1">
             <!-- Trastes Físicos Metalizados (Cuadrícula del diapasón de 6 columnas) -->
             <div class="frets-grid absolute inset-0 flex z-10" id="fretsGrid">
@@ -383,6 +344,34 @@
                 <div class="fret-num" id="f3" style="flex: 1;">Traste 7</div>
                 <div class="fret-num" id="f4" style="flex: 1;">Traste 8</div>
                 <div class="fret-num" id="f5" style="flex: 1;">Traste 9</div>
+            </div>
+        </div>
+
+        <!-- Barra de controles compacta bajo el diapasón -->
+        <div class="fretboard-footer flex items-center justify-between gap-2 mt-2 mb-4 px-1">
+            <!-- Tip de posición (izquierda, pequeño) -->
+            <span id="tipText" class="text-[9px] font-bold uppercase tracking-wider text-cyan-400/70 truncate max-w-[45%]">Selecciona una nota</span>
+
+            <!-- Controles (derecha) -->
+            <div class="flex items-center gap-2">
+                <!-- Selector posición -->
+                <div class="flex items-center gap-1 bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-800/50">
+                    <label for="positionSelect" class="text-[9px] font-bold uppercase tracking-wider text-slate-500">Pos:</label>
+                    <select id="positionSelect" onchange="window.triggerRegenerate()" class="bg-transparent text-cyan-400 font-extrabold text-[9px] focus:outline-none border-none cursor-pointer p-0">
+                        <option value="1" class="bg-slate-950 text-slate-300">1ª (0-5)</option>
+                        <option value="2" class="bg-slate-950 text-slate-300">2ª (1-6)</option>
+                        <option value="3" class="bg-slate-950 text-slate-300">3ª (2-7)</option>
+                        <option value="5" class="bg-slate-950 text-slate-300" selected>5ª (4-9)</option>
+                        <option value="7" class="bg-slate-950 text-slate-300">7ª (6-11)</option>
+                        <option value="12" class="bg-slate-950 text-slate-300">12ª (11-16)</option>
+                    </select>
+                </div>
+
+                <!-- Toggle Notas / Intervalos -->
+                <div class="flex items-center gap-0.5 bg-slate-900/60 p-0.5 rounded-lg border border-slate-800/50">
+                    <button id="viewNotesBtn" onclick="window.setViewMode('notes')" class="px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all duration-200 bg-cyan-600 text-white focus:outline-none">Notas</button>
+                    <button id="viewIntervalsBtn" onclick="window.setViewMode('intervals')" class="px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all duration-200 text-slate-400 hover:text-slate-200 focus:outline-none">Intervalos</button>
+                </div>
             </div>
         </div>
 

@@ -400,27 +400,15 @@ option {
     header,
     #currentNoteText,
     #theoryPanel,
-    .fretboard-header .text-slate-500,  /* "Sugerencia de digitación" */
+    .fretboard-footer,
     .action-btns {
         display: none !important;
-    }
-
-    /* Controles del pentagrama: compactos en una línea */
-    .flex.justify-between.items-center.mb-2 {
-        margin-bottom: 4px !important;
     }
 
     /* Staff wrapper más compacto */
     .staff-wrapper {
         margin-bottom: 6px;
         border-width: 3px;
-    }
-
-    /* Cabecera del diapasón: compacta */
-    .fretboard-header {
-        padding: 4px 8px !important;
-        margin-bottom: 4px !important;
-        gap: 6px !important;
     }
 
     /* Diapasón: altura reducida para caber en pantalla */
