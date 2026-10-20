@@ -347,7 +347,8 @@ async function startRealPractice() {
     const stopBtn = document.getElementById('stopBtn');
     if (stopBtn) stopBtn.style.display = 'inline-flex';
     
-    document.getElementById('tunerBar').style.opacity = '1';
+    const tunerBar = document.getElementById('tunerBar');
+    if (tunerBar) tunerBar.style.opacity = '1';
     
     try {
         let stream;
