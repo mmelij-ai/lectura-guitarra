@@ -382,3 +382,54 @@ option {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
 }
+
+/* ── Landscape en celular: pentagrama arriba, diapasón abajo, sin scroll ── */
+@media (max-height: 500px) and (orientation: landscape) {
+    body {
+        padding: 4px;
+        justify-content: flex-start;
+    }
+
+    .container-main {
+        padding: 8px 10px;
+        border-radius: 12px;
+        max-width: 100%;
+    }
+
+    /* Ocultar elementos que no son pentagrama ni diapasón */
+    header,
+    #currentNoteText,
+    #theoryPanel,
+    .fretboard-header .text-slate-500,  /* "Sugerencia de digitación" */
+    .action-btns {
+        display: none !important;
+    }
+
+    /* Controles del pentagrama: compactos en una línea */
+    .flex.justify-between.items-center.mb-2 {
+        margin-bottom: 4px !important;
+    }
+
+    /* Staff wrapper más compacto */
+    .staff-wrapper {
+        margin-bottom: 6px;
+        border-width: 3px;
+    }
+
+    /* Cabecera del diapasón: compacta */
+    .fretboard-header {
+        padding: 4px 8px !important;
+        margin-bottom: 4px !important;
+        gap: 6px !important;
+    }
+
+    /* Diapasón: altura reducida para caber en pantalla */
+    .fretboard {
+        padding: 20px 0 14px 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .strings-container {
+        height: 110px !important;
+    }
+}
