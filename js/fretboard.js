@@ -266,7 +266,7 @@ function renderScaleMarkers() {
 
 function updateFretboardMarker(note) {
     const marker = document.getElementById('neckMarker');
-    const badge = document.getElementById('fingeringBadge');
+    const scaleLayer = document.getElementById('scaleMarkersContainer');
     const tipText = document.getElementById('tipText');
     const positionEl = document.getElementById('positionSelect');
     const tonicEl = document.getElementById('tonicSelect');
@@ -277,7 +277,7 @@ function updateFretboardMarker(note) {
 
     if (!note) {
         if (marker) marker.style.display = 'none';
-        if (badge) badge.style.display = 'none';
+        if (scaleLayer) scaleLayer.style.opacity = '1';
         const positionNames = {
             "1": "1ª Posición",
             "2": "2ª Posición",
@@ -369,14 +369,11 @@ function updateFretboardMarker(note) {
         }
     }
 
-    // Badge de digitación flotante junto al marcador
-    if (badge && note.tip) {
-        badge.textContent = note.tip;
-        badge.style.left = `${porcenHorizontal}%`;
-        badge.style.top = `${yPosition}px`;
-        // Ajustar offset horizontal: si está en la mitad derecha, mostrar a la izquierda
-        const offsetX = porcenHorizontal > 60 ? 'calc(-100% - 14px)' : '14px';
-        badge.style.transform = `translate(${offsetX}, -50%)`;
-        badge.style.display = 'block';
+    // Iluminar la nota activa: halo ámbar + leve aumento; el resto de la escala se atenúa
+    if (marker) {
+        marker.style.boxShadow = '0 0 0 3px rgba(251,191,36,0.95), 0 0 16px 6px rgba(251,191,36,0.7)';
+        marker.style.transform = 'translate(-50%, -50%) scale(1.2)';
+        marker.style.zIndex = '40';
     }
+    if (scaleLayer) scaleLayer.style.opacity = '0.3';
 }
