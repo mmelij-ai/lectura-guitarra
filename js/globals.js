@@ -90,4 +90,4 @@ let inputTestAnimationId = null;
 
 // Modos de vista e intervalos
 window.viewMode = 'notes'; // 'notes' o 'intervals'
-window.showStaveIntervals = true;
+window.showStaveIntervals = false; // ocultos por defecto

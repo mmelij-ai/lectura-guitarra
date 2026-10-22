@@ -539,8 +539,12 @@ function selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourB
     );
 
     // Fallback si el pool filtrado queda vacío (escala muy pequeña)
+    // (las más cercanas, nunca un salto arbitrario)
     if (candidates.length === 0) {
-        candidates = activePool.filter(n => n.midi !== lastMidi);
+        candidates = activePool
+            .filter(n => n.midi !== lastMidi)
+            .sort((a, b) => Math.abs(a.midi - lastMidi) - Math.abs(b.midi - lastMidi))
+            .slice(0, 4);
     }
 
     // Excepción expresiva solo en avanzado: ampliar el rango un poco,
@@ -745,13 +749,29 @@ function generateExerciseSequence() {
     generatedExercise = [];
     totalBeats = totalBars * 4;
 
-    const info = buildPitchInfo(activePool);
+    // ── Registro: la melodía vive en una ventana de ~una décima, cerca del
+    // centro del mástil de la posición, para evitar cambios de registro bruscos.
+    const startOnTonicEl = document.getElementById('startOnTonicCheck');
+    const startOnTonic = !startOnTonicEl || startOnTonicEl.checked;
+    const sortedMidis = activePool.map(n => n.midi).sort((a, b) => a - b);
+    const medianMidi = sortedMidis[Math.floor(sortedMidis.length / 2)];
+    const roots = activePool.filter(n => n.interval === "1");
+    let anchorMidi = medianMidi;
+    if (startOnTonic && roots.length > 0) {
+        const byCloseness = [...new Set(roots.map(n => n.midi))]
+            .sort((a, b) => Math.abs(a - medianMidi) - Math.abs(b - medianMidi));
+        anchorMidi = byCloseness[Math.floor(Math.random() * Math.min(2, byCloseness.length))];
+    }
+    const REGISTER_BELOW = 5, REGISTER_ABOVE = 12;
+    let registerPool = activePool.filter(n =>
+        n.midi >= anchorMidi - REGISTER_BELOW && n.midi <= anchorMidi + REGISTER_ABOVE);
+    if (new Set(registerPool.map(n => n.midi)).size < 5) registerPool = activePool;
+
+    const info = buildPitchInfo(registerPool);
     const maxLeap = MAX_LEAP[difficulty] ?? MAX_LEAP.normal;
     // Notas libres: toda la escala. Las tensiones pueden aparecer sin resolver;
     // las notas a evitar siguen fuera de los tiempos fuertes.
-    const freePool = activePool;
-    const startOnTonicEl = document.getElementById('startOnTonicCheck');
-    const startOnTonic = !startOnTonicEl || startOnTonicEl.checked;
+    const freePool = registerPool;
 
     const slots = buildRhythmSlots(rhythmType, totalBars);
 
@@ -791,9 +811,9 @@ function generateExerciseSequence() {
 
         // Primera nota en la tónica
         if (generatedExercise.length === 0 && startOnTonic) {
-            const roots = activePool.filter(n => n.interval === "1");
-            if (roots.length > 0) {
-                pushPitched(roots[Math.floor(Math.random() * roots.length)], slot);
+            const rootsInRange = registerPool.filter(n => n.midi === anchorMidi && n.interval === "1");
+            if (rootsInRange.length > 0) {
+                pushPitched(rootsInRange[Math.floor(Math.random() * rootsInRange.length)], slot);
                 continue;
             }
         }
@@ -843,7 +863,7 @@ function generateExerciseSequence() {
         }
 
         // ── Nota libre ───────────────────────────────────────────────────────
-        const lastNote = generatedExercise[generatedExercise.length - 1] || null;
+        const lastNote = lastPitched();   // los saltos se miden contra la última nota real, no el silencio
         let randomNote = null;
         let attempts = 0;
         while (attempts < 50) {

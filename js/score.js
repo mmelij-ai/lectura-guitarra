@@ -155,9 +155,7 @@ function renderScoreToOffscreen() {
 
             if (note.interval && window.showStaveIntervals) {
                 try {
-                    // Adornos: p = paso, v = vuelta, ap = apoyatura (ej. "T9·p")
-                    const ornTag = { paso: 'p', vuelta: 'v', apoyatura: 'ap' }[note.ornament];
-                    const annotation = new VF.Annotation(ornTag ? `${note.interval}·${ornTag}` : note.interval);
+                    const annotation = new VF.Annotation(note.interval);
                     annotation.setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM);
                     
                     try {
