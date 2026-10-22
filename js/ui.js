@@ -207,7 +207,7 @@ const STORAGE_KEY = 'lectura-guitarra-config';
 
 const CONFIG_FIELDS = [
     'tonicSelect', 'scaleSelect', 'positionSelect', 'difficultySelect',
-    'rhythmSelect', 'grooveSelect', 'barsSelect', 'ornamentSelect', 'calibrationSelect', 'bpmSlider',
+    'rhythmSelect', 'grooveSelect', 'barsSelect', 'calibrationSelect', 'bpmSlider',
     'latencySlider'
 ];
 // Checkboxes se persisten por separado (valor booleano)

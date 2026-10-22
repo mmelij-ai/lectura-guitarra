@@ -732,14 +732,12 @@ function generateExerciseSequence() {
     const difficultyEl = document.getElementById('difficultySelect');
     const barsSelectEl = document.getElementById('barsSelect');
     const grooveSelect = document.getElementById('grooveSelect');
-    const ornamentEl = document.getElementById('ornamentSelect');
 
     const rhythmType = rhythmTypeEl ? rhythmTypeEl.value : "mezcladas";
     const difficulty = difficultyEl ? difficultyEl.value : "basic";
     const totalBars = barsSelectEl ? parseInt(barsSelectEl.value) : 4;
-    const ornamentMode = ornamentEl ? ornamentEl.value : 'none';
-    const ornamentKinds = ornamentMode === 'todos' ? ['paso', 'vuelta', 'apoyatura']
-        : (ornamentMode === 'none' ? [] : [ornamentMode]);
+    // Los tres adornos siempre están activos para que la línea suene como una melodía real
+    const ornamentKinds = ['paso', 'vuelta', 'apoyatura'];
 
     isSwingActive = grooveSelect && grooveSelect.value === 'swing';
 
@@ -749,10 +747,9 @@ function generateExerciseSequence() {
 
     const info = buildPitchInfo(activePool);
     const maxLeap = MAX_LEAP[difficulty] ?? MAX_LEAP.normal;
-    // Con adornos activados, las disonancias solo aparecen como adornos:
-    // las notas "libres" salen del acorde.
-    const chordPool = activePool.filter(n => n.type === 'chord');
-    const freePool = (ornamentKinds.length && chordPool.length >= 2) ? chordPool : activePool;
+    // Notas libres: toda la escala. Las tensiones pueden aparecer sin resolver;
+    // las notas a evitar siguen fuera de los tiempos fuertes.
+    const freePool = activePool;
     const startOnTonicEl = document.getElementById('startOnTonicCheck');
     const startOnTonic = !startOnTonicEl || startOnTonicEl.checked;
 
@@ -852,7 +849,7 @@ function generateExerciseSequence() {
         while (attempts < 50) {
             randomNote = selectNextNoteWithDifficulty(difficulty, freePool, lastNote, contourBias);
 
-            // Sin adornos, las notas a evitar no van en tiempo fuerte
+            // Las notas a evitar no van en tiempo fuerte (salvo como apoyatura, que resuelve)
             if (randomNote.type === 'avoid') {
                 const barBeats = slot.startBeat % 4;
                 const strong = slot.duration === 1.0
