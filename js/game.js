@@ -769,6 +769,11 @@ function generateExerciseSequence() {
         n.midi >= anchorMidi - REGISTER_BELOW && n.midi <= anchorMidi + REGISTER_ABOVE);
     if (new Set(registerPool.map(n => n.midi)).size < 5) registerPool = activePool;
 
+    // ── Cierre de la melodía: tónica (50 %), tercera (25 %) o quinta (25 %) ──
+    const closingRoll = Math.random();
+    let closingIntervals = closingRoll < 0.5 ? ['1'] : (closingRoll < 0.75 ? ['3', 'b3'] : ['5']);
+    if (!activePool.some(n => closingIntervals.includes(n.interval))) closingIntervals = ['1'];
+
     const info = buildPitchInfo(registerPool);
     const maxLeap = MAX_LEAP[difficulty] ?? MAX_LEAP.normal;
     // Notas libres: toda la escala. Las tensiones pueden aparecer sin resolver;
@@ -866,11 +871,11 @@ function generateExerciseSequence() {
             }
         }
 
-        // ── Última nota antes de la resolución: llega a la tónica por grado conjunto ──
+        // ── Última nota antes de la resolución: llega a la nota de cierre por grado conjunto ──
         if (i === lastNoteSlot && generatedExercise.length > 0) {
             const ref = lastPitched();
             const approachMidis = [];
-            [...new Set(registerPool.filter(n => n.interval === "1").map(n => n.midi))].forEach(rm => {
+            [...new Set(registerPool.filter(n => closingIntervals.includes(n.interval)).map(n => n.midi))].forEach(rm => {
                 [1, -1].forEach(dir => {
                     const m = scaleStep(info, rm, dir);
                     if (m === null || info.byMidi.get(m)[0].type === 'avoid') return;
@@ -909,11 +914,21 @@ function generateExerciseSequence() {
         pushPitched(randomNote, slot);
     }
 
-    // ── Compás de resolución: redonda en la tónica más cercana a la última nota ──
+    // ── Compás de resolución: redonda en la nota de cierre más cercana a la última nota ──
     {
         const ref = lastPitched();
-        let rootPool = registerPool.filter(n => n.interval === "1");
-        if (rootPool.length === 0) rootPool = activePool.filter(n => n.interval === "1");
+        // Si la nota de cierre elegida queda lejos de la última nota, se prueba con otra (tónica, 3ª o 5ª)
+        const refMidi0 = ref ? ref.midi : anchorMidi;
+        const distTo = set => {
+            const pool = registerPool.filter(n => set.includes(n.interval));
+            return pool.length ? Math.min(...pool.map(n => Math.abs(n.midi - refMidi0))) : Infinity;
+        };
+        let chosenSet = closingIntervals;
+        if (distTo(chosenSet) > 7) {
+            chosenSet = [['1'], ['3', 'b3'], ['5']].reduce((best, set) => distTo(set) < distTo(best) ? set : best, chosenSet);
+        }
+        let rootPool = registerPool.filter(n => chosenSet.includes(n.interval));
+        if (rootPool.length === 0) rootPool = activePool.filter(n => chosenSet.includes(n.interval));
         if (rootPool.length > 0) {
             const refMidi = ref ? ref.midi : anchorMidi;
             const best = Math.min(...rootPool.map(n => Math.abs(n.midi - refMidi)));

@@ -19,7 +19,7 @@ function getStemDirection(vfKey) {
 }
 
 const STAFF_H = 150;        // alto del lienzo del pentagrama
-const STAFF_CLEF_W = 80;    // ancho de la clave + compás (fija a la izquierda)
+const STAFF_CLEF_BASE = 80; // ancho de clave + compás (fija a la izquierda); la armadura suma más
 const STAFF_BAR_MIN = 190;  // ancho mínimo de cada compás
 const STAFF_END_PAD = 8;    // margen derecho para que se vea la barra final
 
@@ -38,6 +38,8 @@ function renderScoreToOffscreen() {
     // El compás tiene un ancho mínimo (STAFF_BAR_MIN). Si no caben todos, el pentagrama
     // se desplaza horizontalmente y siempre quedan visibles el compás actual y el siguiente.
     const totalBars = Math.max(1, Math.round(totalBeats / 4));
+    const keySig = window.currentKeySignature || { count: 0, sig: {}, name: 'C' };
+    const clefW = STAFF_CLEF_BASE + (keySig.count !== 0 ? 6 + 12 * Math.abs(keySig.count) : 0);
     const wrapper  = document.getElementById('staffWrapper');
     const scroller = document.getElementById('staffScroller');
     const inner    = document.getElementById('staffInner');
@@ -45,10 +47,10 @@ function renderScoreToOffscreen() {
     // En celular horizontal (poca altura) el pentagrama se reduce algo para que quepan los botones
     const shortLandscape = window.matchMedia && window.matchMedia('(max-height: 500px) and (orientation: landscape)').matches;
     const scaleCap = shortLandscape ? 0.8 : 1;
-    const scale    = Math.min(scaleCap, viewW / (STAFF_CLEF_W + 2 * STAFF_BAR_MIN + STAFF_END_PAD)); // al menos 2 compases visibles
-    const barW     = Math.max(STAFF_BAR_MIN, Math.floor((viewW / scale - STAFF_CLEF_W - STAFF_END_PAD) / totalBars));
-    const fullW    = STAFF_CLEF_W + barW * totalBars + STAFF_END_PAD;
-    window.staffLayout = { scale, barW, totalBars, fullW };
+    const scale    = Math.min(scaleCap, viewW / (clefW + 2 * STAFF_BAR_MIN + STAFF_END_PAD)); // al menos 2 compases visibles
+    const barW     = Math.max(STAFF_BAR_MIN, Math.floor((viewW / scale - clefW - STAFF_END_PAD) / totalBars));
+    const fullW    = clefW + barW * totalBars + STAFF_END_PAD;
+    window.staffLayout = { scale, barW, totalBars, fullW, clefW };
 
     // Mantener el ancho del contenido fijo antes de limpiar, para no perder la posición del scroll
     if (inner) { inner.style.width = `${fullW * scale}px`; }
@@ -64,7 +66,7 @@ function renderScoreToOffscreen() {
     const staveWidths = [];
     for (let i = 0; i < totalBars; i++) {
         staveWidths.push(barW);
-        const stave = new VF.Stave(STAFF_CLEF_W + i * barW, 10, barW);
+        const stave = new VF.Stave(clefW + i * barW, 10, barW);
         if (i === totalBars - 1) {
             stave.setEndBarType(VF.Barline.type.END);   // barra final (fina + gruesa)
         }
@@ -77,19 +79,20 @@ function renderScoreToOffscreen() {
     if (clefDiv) {
         clefDiv.innerHTML = "";
         const clefRenderer = new VF.Renderer(clefDiv, VF.Renderer.Backends.SVG);
-        clefRenderer.resize(STAFF_CLEF_W, STAFF_H);
-        const clefStave = new VF.Stave(0, 10, STAFF_CLEF_W - 1);
+        clefRenderer.resize(clefW, STAFF_H);
+        const clefStave = new VF.Stave(0, 10, clefW - 1);
         clefStave.addClef("treble");
+        if (keySig.count !== 0) clefStave.addKeySignature(keySig.name);
         clefStave.addTimeSignature("4/4");
         clefStave.setContext(clefRenderer.getContext()).draw();
         const clefSvg = clefDiv.querySelector('svg');
         if (clefSvg) {
-            clefSvg.setAttribute('viewBox', `0 0 ${STAFF_CLEF_W} ${STAFF_H}`);
-            clefSvg.style.width = `${STAFF_CLEF_W * scale}px`;
+            clefSvg.setAttribute('viewBox', `0 0 ${clefW} ${STAFF_H}`);
+            clefSvg.style.width = `${clefW * scale}px`;
             clefSvg.style.height = `${STAFF_H * scale}px`;
             clefSvg.style.display = 'block';
         }
-        clefDiv.style.width = `${STAFF_CLEF_W * scale}px`;
+        clefDiv.style.width = `${clefW * scale}px`;
     }
 
     const durationMap = { 4.0: "w", 1.0: "q", 0.5: "8" };
@@ -106,7 +109,9 @@ function renderScoreToOffscreen() {
         const notesInMeasure = measuresNotes[m];
         if (notesInMeasure.length === 0) continue;
 
-        const activeAccidentalForLetter = {}; 
+        // Alteraciones vigentes por letra: empiezan con las de la armadura en cada compás
+        const activeAccidentalForLetter = {};
+        'abcdefg'.split('').forEach(l => { activeAccidentalForLetter[l] = keySig.sig[l] || ''; });
         const stemDirections = new Array(notesInMeasure.length);
         let idx = 0;
         while (idx < notesInMeasure.length) {
@@ -168,14 +173,9 @@ function renderScoreToOffscreen() {
             const naturalLetter = note.vfKey[0]; 
             const noteAcc = note.accidental || ""; 
             
-            if (activeAccidentalForLetter[naturalLetter] !== undefined && activeAccidentalForLetter[naturalLetter] !== noteAcc) {
-                if (noteAcc === "") {
-                    staveNote.addModifier(new VF.Accidental("n"), 0);
-                } else {
-                    staveNote.addModifier(new VF.Accidental(noteAcc), 0);
-                }
-            } else if (noteAcc !== "") {
-                staveNote.addModifier(new VF.Accidental(noteAcc), 0);
+            // Solo se escribe la alteración si difiere de lo vigente (armadura o alteración previa del compás)
+            if (activeAccidentalForLetter[naturalLetter] !== noteAcc) {
+                staveNote.addModifier(new VF.Accidental(noteAcc === "" ? "n" : noteAcc), 0);
             }
             activeAccidentalForLetter[naturalLetter] = noteAcc;
 
@@ -347,10 +347,10 @@ function followStaffBar(bar) {
     renderBarProgress();
 
     const s = L.scale;
-    const left = (STAFF_CLEF_W + bar * L.barW) * s;
+    const left = (L.clefW + bar * L.barW) * s;
     const lastVisibleBar = Math.min(bar + 1, L.totalBars - 1);
-    const right = (STAFF_CLEF_W + (lastVisibleBar + 1) * L.barW) * s;
-    const viewL = sc.scrollLeft + STAFF_CLEF_W * s;
+    const right = (L.clefW + (lastVisibleBar + 1) * L.barW) * s;
+    const viewL = sc.scrollLeft + L.clefW * s;
     const viewR = sc.scrollLeft + sc.clientWidth;
     if (left >= viewL - 1 && right <= viewR + 1) return;
 

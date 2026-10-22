@@ -198,6 +198,9 @@ if (btnToggleInputTest) {
 window.addEventListener('resize', () => {
     drawStaff();
     updateFretboardLabels();
+    // El alto del diapasón cambia con la orientación: reposicionar las notas
+    renderScaleMarkers();
+    if (!isPlaying && !isPreviewPlaying && !isRecordingPlayback) updateFretboardMarker(null);
 });
 
 // ==========================================

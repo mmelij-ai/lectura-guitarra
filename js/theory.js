@@ -107,6 +107,37 @@ const scaleFormulas = {
     dominante_8:    ["1", "Tb9", "T#9", "3", "T#11", "5", "T13", "b7"] // Dominante de 8 notas
 };
 
+// ==========================================
+// ARMADURA DE CLAVE
+// ==========================================
+// Elige la armadura (7♭ … 7♯) que obliga a escribir menos alteraciones accidentales
+// en la escala; a igualdad, la que tiene menos alteraciones en la armadura.
+// Ej.: Re dórico → sin armadura; Do mixolidio → 1♭; Do menor armónica → 3♭ (+ Si natural).
+const KEY_SHARP_ORDER = ['f', 'c', 'g', 'd', 'a', 'e', 'b'];
+const KEY_FLAT_ORDER  = ['b', 'e', 'a', 'd', 'g', 'c', 'f'];
+const KEY_NAMES_SHARP = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'];
+const KEY_NAMES_FLAT  = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'];
+
+function computeKeySignature(scaleNotes) {
+    let best = null;
+    for (let n = -7; n <= 7; n++) {
+        const sig = {};
+        if (n > 0) KEY_SHARP_ORDER.slice(0, n).forEach(l => { sig[l] = '#'; });
+        if (n < 0) KEY_FLAT_ORDER.slice(0, -n).forEach(l => { sig[l] = 'b'; });
+        const needed = new Set();
+        scaleNotes.forEach(sn => {
+            if ((sig[sn.letter] || '') !== (sn.accidental || '')) needed.add(sn.letter + sn.accidental);
+        });
+        if (!best || needed.size < best.score ||
+            (needed.size === best.score && Math.abs(n) < Math.abs(best.count))) {
+            best = { count: n, score: needed.size, sig };
+        }
+    }
+    best.name = best.count === 0 ? 'C'
+        : best.count > 0 ? KEY_NAMES_SHARP[best.count - 1] : KEY_NAMES_FLAT[-best.count - 1];
+    return best;
+}
+
 function buildDynamicNotePool() {
     const positionEl = document.getElementById('positionSelect');
     const tonicEl = document.getElementById('tonicSelect');
@@ -152,6 +183,8 @@ function buildDynamicNotePool() {
         });
     });
     
+    window.currentKeySignature = computeKeySignature(scaleNotes);
+
     // Frecuencias del Mástil (Sonido Real de la Guitarra en afinación estándar)
     const stringBases = {
         1: 64, // E4 (High E)
