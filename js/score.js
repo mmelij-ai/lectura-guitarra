@@ -21,6 +21,7 @@ function getStemDirection(vfKey) {
 const STAFF_H = 150;        // alto del lienzo del pentagrama
 const STAFF_CLEF_W = 80;    // ancho de la clave + compás (fija a la izquierda)
 const STAFF_BAR_MIN = 190;  // ancho mínimo de cada compás
+const STAFF_END_PAD = 8;    // margen derecho para que se vea la barra final
 
 function renderScoreToOffscreen() {
     const VF = typeof Vex !== 'undefined' ? Vex.Flow : null;
@@ -41,9 +42,12 @@ function renderScoreToOffscreen() {
     const scroller = document.getElementById('staffScroller');
     const inner    = document.getElementById('staffInner');
     const viewW    = (scroller && scroller.clientWidth) || (wrapper && wrapper.clientWidth) || 820;
-    const scale    = Math.min(1, viewW / (STAFF_CLEF_W + 2 * STAFF_BAR_MIN)); // al menos 2 compases visibles
-    const barW     = Math.max(STAFF_BAR_MIN, Math.floor((viewW / scale - STAFF_CLEF_W) / totalBars));
-    const fullW    = STAFF_CLEF_W + barW * totalBars;
+    // En celular horizontal (poca altura) el pentagrama se reduce algo para que quepan los botones
+    const shortLandscape = window.matchMedia && window.matchMedia('(max-height: 500px) and (orientation: landscape)').matches;
+    const scaleCap = shortLandscape ? 0.8 : 1;
+    const scale    = Math.min(scaleCap, viewW / (STAFF_CLEF_W + 2 * STAFF_BAR_MIN + STAFF_END_PAD)); // al menos 2 compases visibles
+    const barW     = Math.max(STAFF_BAR_MIN, Math.floor((viewW / scale - STAFF_CLEF_W - STAFF_END_PAD) / totalBars));
+    const fullW    = STAFF_CLEF_W + barW * totalBars + STAFF_END_PAD;
     window.staffLayout = { scale, barW, totalBars, fullW };
 
     // Mantener el ancho del contenido fijo antes de limpiar, para no perder la posición del scroll
@@ -62,7 +66,7 @@ function renderScoreToOffscreen() {
         staveWidths.push(barW);
         const stave = new VF.Stave(STAFF_CLEF_W + i * barW, 10, barW);
         if (i === totalBars - 1) {
-            stave.setEndBarType(VF.Barline.type.DOUBLE);
+            stave.setEndBarType(VF.Barline.type.END);   // barra final (fina + gruesa)
         }
         stave.setContext(context).draw();
         staves.push(stave);
