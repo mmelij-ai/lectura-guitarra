@@ -170,6 +170,17 @@
                         </select>
                     </div>
 
+                    <div class="form-group flex flex-col gap-2">
+                        <label for="ornamentSelect" class="text-xs font-bold uppercase tracking-widest text-slate-400">Notas de adorno</label>
+                        <select id="ornamentSelect" onchange="window.triggerRegenerate()">
+                            <option value="none" selected>Sin adornos</option>
+                            <option value="todos">Todos los adornos</option>
+                            <option value="paso">Notas de paso (p)</option>
+                            <option value="vuelta">Notas de vuelta (v)</option>
+                            <option value="apoyatura">Apoyaturas (ap)</option>
+                        </select>
+                    </div>
+
                     <!-- Opciones de generación -->
                     <div class="form-group flex flex-col gap-2 col-span-1 justify-center">
                         <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Opciones</label>
@@ -475,9 +486,9 @@
 <script src="js/theory.js?v=2"></script>
 <script src="js/audio.js"></script>
 <script src="js/fretboard.js?v=12"></script>
-<script src="js/score.js"></script>
-<script src="js/game.js?v=2"></script>
-<script src="js/ui.js"></script>
+<script src="js/score.js?v=2"></script>
+<script src="js/game.js?v=3"></script>
+<script src="js/ui.js?v=2"></script>
 
 </body>
 </html>

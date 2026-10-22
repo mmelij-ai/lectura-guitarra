@@ -588,147 +588,291 @@ function selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourB
     return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
+// ─── Notas de adorno ─────────────────────────────────────────────────────────
+// Definiciones:
+//  • Nota de paso:   disonancia en tiempo débil, entre dos notas distintas del acorde,
+//                    por grado conjunto y en una sola dirección (C1 → P → C2).
+//  • Nota de vuelta: como la de paso, pero la disonancia (superior o inferior)
+//                    regresa a la misma nota del acorde (C → V → C).
+//  • Apoyatura:      disonancia en tiempo fuerte que resuelve por grado conjunto
+//                    descendente a una nota del acorde (A → C).
+// "Disonancia" = nota de la escala que no es del acorde (tensiones y notas a evitar).
+// Tiempo fuerte = pulsos 1 y 3 del compás; todo lo demás es débil.
+const ORNAMENT_CHANCE = 0.5; // probabilidad de intentar un adorno donde cabe uno
+
+function buildPitchInfo(pool) {
+    const byMidi = new Map();
+    pool.forEach(n => {
+        if (!byMidi.has(n.midi)) byMidi.set(n.midi, []);
+        byMidi.get(n.midi).push(n);
+    });
+    const midis = [...byMidi.keys()].sort((a, b) => a - b);
+    const idx = new Map(midis.map((m, i) => [m, i]));
+    return { byMidi, midis, idx };
+}
+
+function isChordMidi(info, midi) {
+    return info.byMidi.get(midi)[0].type === 'chord';
+}
+
+// Grado conjunto: siguiente nota de la escala hacia arriba (+1) o abajo (-1).
+// Devuelve null si no existe en la posición o si el paso supera 3 semitonos.
+function scaleStep(info, midi, dir) {
+    const m = info.midis[info.idx.get(midi) + dir];
+    if (m === undefined || Math.abs(m - midi) > 3) return null;
+    return m;
+}
+
+// Todas las figuras posibles de un tipo de adorno, con la primera nota
+// a distancia de salto aceptable de la nota anterior.
+function buildOrnamentFigures(kind, info, lastMidi, maxLeap) {
+    const figures = [];
+    const near = m => lastMidi == null || (m !== lastMidi && Math.abs(m - lastMidi) <= maxLeap);
+
+    for (const m of info.midis) {
+        const chord = isChordMidi(info, m);
+
+        if (kind === 'apoyatura') {
+            if (chord || !near(m)) continue;
+            const r = scaleStep(info, m, -1);
+            if (r !== null && isChordMidi(info, r)) {
+                figures.push({ kind, midis: [m, r], ornIdx: 0 });
+            }
+            continue;
+        }
+
+        if (!chord || !near(m)) continue;
+        for (const dir of [1, -1]) {
+            const d = scaleStep(info, m, dir);
+            if (d === null || isChordMidi(info, d)) continue;
+            if (kind === 'vuelta') {
+                figures.push({ kind, midis: [m, d, m], ornIdx: 1 });
+            } else {
+                const c2 = scaleStep(info, d, dir);
+                if (c2 !== null && isChordMidi(info, c2)) {
+                    figures.push({ kind, midis: [m, d, c2], ornIdx: 1 });
+                }
+            }
+        }
+    }
+    return figures;
+}
+
+// Elección ponderada por el contorno melódico (por la altura de la primera nota)
+function pickFigureByContour(figures, contourBias) {
+    if (Math.abs(contourBias) <= 0.05) {
+        return figures[Math.floor(Math.random() * figures.length)];
+    }
+    const mids = figures.map(f => f.midis[0]);
+    const lo = Math.min(...mids), hi = Math.max(...mids);
+    const range = hi - lo || 1;
+    const weights = figures.map(f => {
+        const pos = (f.midis[0] - lo) / range;
+        return 1 + Math.abs(contourBias) * (contourBias > 0 ? pos : 1 - pos);
+    });
+    let r = Math.random() * weights.reduce((s, w) => s + w, 0);
+    for (let i = 0; i < figures.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return figures[i];
+    }
+    return figures[figures.length - 1];
+}
+
+// Entre las posiciones de una misma altura, elige la más cercana a la nota anterior
+function pickEntryNear(info, midi, ref) {
+    const entries = info.byMidi.get(midi);
+    if (!ref) return entries[Math.floor(Math.random() * entries.length)];
+    let best = [], bestD = Infinity;
+    entries.forEach(e => {
+        const d = Math.abs(e.string - ref.string) * 2 + Math.abs(e.fret - ref.fret);
+        if (d < bestD) { bestD = d; best = [e]; }
+        else if (d === bestD) best.push(e);
+    });
+    return best[Math.floor(Math.random() * best.length)];
+}
+
+// Ritmo: lista de "casillas" (figura + silencio o nota) para todo el ejercicio
+function buildRhythmSlots(rhythmType, totalBars) {
+    const slots = [];
+    let currentPos = 0;
+    const REST_CHANCE = 0.15;
+
+    for (let bar = 0; bar < totalBars; bar++) {
+        let barBeats = 0;
+        while (barBeats < 4) {
+            let durations;
+            if (rhythmType === "corcheas") durations = [0.5, 0.5];
+            else if (rhythmType === "negras") durations = [1.0];
+            else durations = Math.random() < 0.35 ? [0.5, 0.5] : [1.0];
+
+            durations.forEach(dur => {
+                // Silencio: negra en tiempos 2-4; corchea solo al inicio del pulso.
+                // Nunca el primero ni dos seguidos.
+                const last = slots[slots.length - 1];
+                const restAllowed = slots.length > 0 && !(last && last.isRest) && (
+                    (dur === 1.0 && barBeats > 0) ||
+                    (dur === 0.5 && Math.abs(barBeats % 1.0) < 0.01)
+                );
+                slots.push({
+                    startBeat: currentPos,
+                    duration: dur,
+                    isRest: restAllowed && Math.random() < REST_CHANCE
+                });
+                currentPos += dur;
+                barBeats += dur;
+            });
+        }
+    }
+    return slots;
+}
+
 function generateExerciseSequence() {
     const scaleEl = document.getElementById('scaleSelect');
     const rhythmTypeEl = document.getElementById('rhythmSelect');
     const difficultyEl = document.getElementById('difficultySelect');
     const barsSelectEl = document.getElementById('barsSelect');
     const grooveSelect = document.getElementById('grooveSelect');
-    
-    const scale = scaleEl ? scaleEl.value : "mayor";
+    const ornamentEl = document.getElementById('ornamentSelect');
+
     const rhythmType = rhythmTypeEl ? rhythmTypeEl.value : "mezcladas";
     const difficulty = difficultyEl ? difficultyEl.value : "basic";
     const totalBars = barsSelectEl ? parseInt(barsSelectEl.value) : 4;
-    
+    const ornamentMode = ornamentEl ? ornamentEl.value : 'none';
+    const ornamentKinds = ornamentMode === 'todos' ? ['paso', 'vuelta', 'apoyatura']
+        : (ornamentMode === 'none' ? [] : [ornamentMode]);
+
     isSwingActive = grooveSelect && grooveSelect.value === 'swing';
-    
+
     activePool = buildDynamicNotePool();
     generatedExercise = [];
     totalBeats = totalBars * 4;
-    let currentPos = 0;
-    
-    for (let bar = 0; bar < totalBars; bar++) {
-        let barBeats = 0;
-        while (barBeats < 4) {
-            let notesToGen = [];
 
-            if (rhythmType === "corcheas") {
-                notesToGen = [0.5, 0.5];
-            } else if (rhythmType === "negras") {
-                notesToGen = [1.0];
-            } else if (rhythmType === "mezcladas") {
-                if (Math.random() < 0.35) {
-                    notesToGen = [0.5, 0.5];
-                } else {
-                    notesToGen = [1.0];
-                }
-            }
-            
-            notesToGen.forEach(noteDuration => {
-                const lastNote = generatedExercise[generatedExercise.length - 1] || null;
-                const lastWasRest = lastNote && lastNote.isRest;
+    const info = buildPitchInfo(activePool);
+    const maxLeap = MAX_LEAP[difficulty] ?? MAX_LEAP.normal;
+    // Con adornos activados, las disonancias solo aparecen como adornos:
+    // las notas "libres" salen del acorde.
+    const chordPool = activePool.filter(n => n.type === 'chord');
+    const freePool = (ornamentKinds.length && chordPool.length >= 2) ? chordPool : activePool;
+    const startOnTonicEl = document.getElementById('startOnTonicCheck');
+    const startOnTonic = !startOnTonicEl || startOnTonicEl.checked;
 
-                // ── Silencios ────────────────────────────────────────────────
-                // Negra: permitido en tiempos 2, 3, 4 (barBeats > 0)
-                // Corchea: solo en la primera corchea del tiempo (beat entero)
-                // Nunca dos silencios consecutivos. Prob: 15 %
-                const REST_CHANCE = 0.15;
-                const isFirstNote = generatedExercise.length === 0;
-                const restAllowed = !isFirstNote && !lastWasRest && (
-                    (noteDuration === 1.0 && barBeats > 0) ||
-                    (noteDuration === 0.5 && Math.abs(barBeats % 1.0) < 0.01)
-                );
+    const slots = buildRhythmSlots(rhythmType, totalBars);
 
-                if (restAllowed && Math.random() < REST_CHANCE) {
-                    generatedExercise.push({
-                        isRest: true,
-                        startBeat: currentPos,
-                        endBeat: currentPos + noteDuration,
-                        duration: noteDuration,
-                        hit: true,   // auto-acierto: no requiere pitch
-                        miss: false
-                    });
-                    currentPos += noteDuration;
-                    barBeats += noteDuration;
-                    return;
-                }
-
-                let randomNote = null;
-
-                if (generatedExercise.length === 0) {
-                    const startOnTonic = document.getElementById('startOnTonicCheck');
-                    if (!startOnTonic || startOnTonic.checked) {
-                        const roots = activePool.filter(n => n.interval === "1");
-                        if (roots.length > 0) {
-                            randomNote = roots[Math.floor(Math.random() * roots.length)];
-                        }
-                    }
-                }
-
-                if (!randomNote) {
-                    // ── Contorno melódico (punto 1) ────────────────────────────
-                    // Dividimos el ejercicio en 4 fases (por beat relativo al total):
-                    //   0–25 %  → ascenso   bias +0.5
-                    //  25–50 %  → clímax    bias +0.2  (sostener altura)
-                    //  50–75 %  → descenso  bias -0.5
-                    //  75–100 % → cadencia  bias -0.3  (acercarse a la tónica)
-                    const progress = totalBeats > 0 ? currentPos / totalBeats : 0;
-                    let contourBias = 0;
-                    if      (progress < 0.25) contourBias =  0.5;
-                    else if (progress < 0.50) contourBias =  0.2;
-                    else if (progress < 0.75) contourBias = -0.5;
-                    else                      contourBias = -0.3;
-
-                    let attempts = 0;
-                    while (attempts < 50) {
-                        randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourBias);
-
-                        if (randomNote.type === 'avoid') {
-                            if (noteDuration === 1.0) {
-                                if (barBeats === 0.0 || barBeats === 2.0) {
-                                    attempts++;
-                                    randomNote = null;
-                                    continue;
-                                }
-                            } else if (noteDuration === 0.5) {
-                                if (Math.abs((barBeats % 1.0) - 0.0) < 0.01) {
-                                    attempts++;
-                                    randomNote = null;
-                                    continue;
-                                }
-                            }
-                        }
-                        break;
-                    }
-
-                    if (!randomNote) {
-                        randomNote = selectNextNoteWithDifficulty(difficulty, activePool, lastNote, contourBias);
-                    }
-                }
-
-                const idealHz = 440 * Math.pow(2, (randomNote.midi - 69) / 12);
-
-                generatedExercise.push({
-                    ...randomNote,
-                    hz: idealHz,
-                    startBeat: currentPos,
-                    endBeat: currentPos + noteDuration,
-                    duration: noteDuration,
-                    hit: false,
-                    miss: false
-                });
-
-                currentPos += noteDuration;
-                barBeats += noteDuration;
-            });
+    const lastPitched = () => {
+        for (let k = generatedExercise.length - 1; k >= 0; k--) {
+            if (!generatedExercise[k].isRest) return generatedExercise[k];
         }
+        return null;
+    };
+    const pushPitched = (entry, slot, ornament) => {
+        generatedExercise.push({
+            ...entry,
+            hz: 440 * Math.pow(2, (entry.midi - 69) / 12),
+            startBeat: slot.startBeat,
+            endBeat: slot.startBeat + slot.duration,
+            duration: slot.duration,
+            hit: false,
+            miss: false,
+            ornament: ornament || null
+        });
+    };
+
+    for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+
+        if (slot.isRest) {
+            generatedExercise.push({
+                isRest: true,
+                startBeat: slot.startBeat,
+                endBeat: slot.startBeat + slot.duration,
+                duration: slot.duration,
+                hit: true,   // auto-acierto: no requiere pitch
+                miss: false
+            });
+            continue;
+        }
+
+        // Primera nota en la tónica
+        if (generatedExercise.length === 0 && startOnTonic) {
+            const roots = activePool.filter(n => n.interval === "1");
+            if (roots.length > 0) {
+                pushPitched(roots[Math.floor(Math.random() * roots.length)], slot);
+                continue;
+            }
+        }
+
+        // Contorno melódico por fases: ascenso, clímax, descenso, cadencia
+        const progress = totalBeats > 0 ? slot.startBeat / totalBeats : 0;
+        let contourBias;
+        if      (progress < 0.25) contourBias =  0.5;
+        else if (progress < 0.50) contourBias =  0.2;
+        else if (progress < 0.75) contourBias = -0.5;
+        else                      contourBias = -0.3;
+
+        // ── Intento de adorno ────────────────────────────────────────────────
+        if (ornamentKinds.length && Math.random() < ORNAMENT_CHANCE) {
+            const ref = lastPitched();
+            const lastMidi = ref ? ref.midi : null;
+            const feasible = [];
+
+            ornamentKinds.forEach(kind => {
+                const len = kind === 'apoyatura' ? 2 : 3;
+                const group = slots.slice(i, i + len);
+                if (group.length < len || group.some(s => s.isRest)) return;
+                if (kind === 'apoyatura') {
+                    if (slot.startBeat % 2 !== 0) return;      // la apoyatura va en tiempo fuerte
+                } else if (group[1].startBeat % 2 === 0) {
+                    return;                                    // paso/vuelta: disonancia en tiempo débil
+                }
+                const figures = buildOrnamentFigures(kind, info, lastMidi, maxLeap);
+                if (figures.length) feasible.push(figures);
+            });
+
+            if (feasible.length) {
+                const figures = feasible[Math.floor(Math.random() * feasible.length)];
+                const fig = pickFigureByContour(figures, contourBias);
+
+                const entries = [];
+                let prev = ref;
+                fig.midis.forEach((m, k) => {
+                    const e = (fig.kind === 'vuelta' && k === 2) ? entries[0] : pickEntryNear(info, m, prev);
+                    entries.push(e);
+                    prev = e;
+                });
+                entries.forEach((e, k) => pushPitched(e, slots[i + k], k === fig.ornIdx ? fig.kind : null));
+                i += fig.midis.length - 1;
+                continue;
+            }
+        }
+
+        // ── Nota libre ───────────────────────────────────────────────────────
+        const lastNote = generatedExercise[generatedExercise.length - 1] || null;
+        let randomNote = null;
+        let attempts = 0;
+        while (attempts < 50) {
+            randomNote = selectNextNoteWithDifficulty(difficulty, freePool, lastNote, contourBias);
+
+            // Sin adornos, las notas a evitar no van en tiempo fuerte
+            if (randomNote.type === 'avoid') {
+                const barBeats = slot.startBeat % 4;
+                const strong = slot.duration === 1.0
+                    ? (barBeats === 0.0 || barBeats === 2.0)
+                    : Math.abs(barBeats % 1.0) < 0.01;
+                if (strong) { attempts++; randomNote = null; continue; }
+            }
+            break;
+        }
+        if (!randomNote) {
+            randomNote = selectNextNoteWithDifficulty(difficulty, freePool, lastNote, contourBias);
+        }
+        pushPitched(randomNote, slot);
     }
-    
+
     generatedExercise.forEach(note => {
         note.swingStartBeat = note.startBeat;
         note.swingEndBeat = note.endBeat;
         note.swingDuration = note.duration;
-        
+
         if (isSwingActive) {
             if (note.startBeat % 1 === 0.5) {
                 note.swingStartBeat = Math.floor(note.startBeat) + (2 / 3);
