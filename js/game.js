@@ -747,7 +747,9 @@ function generateExerciseSequence() {
 
     activePool = buildDynamicNotePool();
     generatedExercise = [];
-    totalBeats = totalBars * 4;
+    const bodyBeats = totalBars * 4;          // compases de la melodía
+    totalBeats = bodyBeats + 4;               // + compás de resolución (redonda final)
+    window.staffScrollX = 0;                  // el pentagrama vuelve al inicio
 
     // ── Registro: la melodía vive en una ventana de ~una décima, cerca del
     // centro del mástil de la posición, para evitar cambios de registro bruscos.
@@ -774,6 +776,8 @@ function generateExerciseSequence() {
     const freePool = registerPool;
 
     const slots = buildRhythmSlots(rhythmType, totalBars);
+    let lastNoteSlot = -1;
+    slots.forEach((sl, k) => { if (!sl.isRest) lastNoteSlot = k; });
 
     const lastPitched = () => {
         for (let k = generatedExercise.length - 1; k >= 0; k--) {
@@ -819,7 +823,7 @@ function generateExerciseSequence() {
         }
 
         // Contorno melódico por fases: ascenso, clímax, descenso, cadencia
-        const progress = totalBeats > 0 ? slot.startBeat / totalBeats : 0;
+        const progress = bodyBeats > 0 ? slot.startBeat / bodyBeats : 0;
         let contourBias;
         if      (progress < 0.25) contourBias =  0.5;
         else if (progress < 0.50) contourBias =  0.2;
@@ -862,6 +866,26 @@ function generateExerciseSequence() {
             }
         }
 
+        // ── Última nota antes de la resolución: llega a la tónica por grado conjunto ──
+        if (i === lastNoteSlot && generatedExercise.length > 0) {
+            const ref = lastPitched();
+            const approachMidis = [];
+            [...new Set(registerPool.filter(n => n.interval === "1").map(n => n.midi))].forEach(rm => {
+                [1, -1].forEach(dir => {
+                    const m = scaleStep(info, rm, dir);
+                    if (m === null || info.byMidi.get(m)[0].type === 'avoid') return;
+                    if (ref && (m === ref.midi || Math.abs(m - ref.midi) > maxLeap)) return;
+                    approachMidis.push(m);
+                    if (dir === 1) approachMidis.push(m);   // cadencia descendente (2→1) algo más probable
+                });
+            });
+            if (approachMidis.length) {
+                const m = approachMidis[Math.floor(Math.random() * approachMidis.length)];
+                pushPitched(pickEntryNear(info, m, ref), slot);
+                continue;
+            }
+        }
+
         // ── Nota libre ───────────────────────────────────────────────────────
         const lastNote = lastPitched();   // los saltos se miden contra la última nota real, no el silencio
         let randomNote = null;
@@ -883,6 +907,27 @@ function generateExerciseSequence() {
             randomNote = selectNextNoteWithDifficulty(difficulty, freePool, lastNote, contourBias);
         }
         pushPitched(randomNote, slot);
+    }
+
+    // ── Compás de resolución: redonda en la tónica más cercana a la última nota ──
+    {
+        const ref = lastPitched();
+        let rootPool = registerPool.filter(n => n.interval === "1");
+        if (rootPool.length === 0) rootPool = activePool.filter(n => n.interval === "1");
+        if (rootPool.length > 0) {
+            const refMidi = ref ? ref.midi : anchorMidi;
+            const best = Math.min(...rootPool.map(n => Math.abs(n.midi - refMidi)));
+            const nearest = [...new Set(rootPool.filter(n => Math.abs(n.midi - refMidi) === best).map(n => n.midi))];
+            const rootMidi = nearest[Math.floor(Math.random() * nearest.length)];
+            const entries = rootPool.filter(n => n.midi === rootMidi);
+            const entry = ref
+                ? pickEntryNear({ byMidi: new Map([[rootMidi, entries]]) }, rootMidi, ref)
+                : entries[0];
+            pushPitched(entry, { startBeat: bodyBeats, duration: 4 });
+            generatedExercise[generatedExercise.length - 1].isResolution = true;
+        } else {
+            totalBeats = bodyBeats;   // sin tónica en la posición: sin compás extra
+        }
     }
 
     generatedExercise.forEach(note => {
@@ -1038,11 +1083,16 @@ function processGuitarInput() {
                 const targetBeat = isSwingActive ? activeNote.swingStartBeat : activeNote.startBeat;
                 const beatsSinceOnset = Math.abs(lastOnsetBeat - targetBeat);
 
-                if (aciertosConsecutivos >= 3 && !activeNote.hit && beatsSinceOnset <= 0.40) { 
+                if (aciertosConsecutivos >= 3 && !activeNote.hit && (activeNote.isResolution || beatsSinceOnset <= 0.40)) { 
                     activeNote.hit = true;
                     hits++;
                     aciertosConsecutivos = 0;
-                    
+
+                    if (activeNote.isResolution) {
+                        // Nota de resolución: solo se evalúa la altura (sin ritmo)
+                        showRhythmFeedback("¡AFINADO!", "#22d3ee");
+                        renderScoreToOffscreen();
+                    } else {
                     const hitBeat = lastOnsetBeat; 
                     const diffBeats = hitBeat - targetBeat;
                     const diffSeconds = diffBeats * (60 / bpm);
@@ -1096,6 +1146,7 @@ function processGuitarInput() {
                     
                     showRhythmFeedback(ratingLabel, ratingColor);
                     renderScoreToOffscreen();
+                    }
                 }
             } else {
                 aciertosConsecutivos = Math.max(0, aciertosConsecutivos - 1);
@@ -1169,7 +1220,9 @@ function finishReading() {
 
     const accuracy = totalNotes > 0 ? Math.round((hits / totalNotes) * 100) : 0;
     // Dividir por totalNotes: notas perdidas cuentan 0, no se ignoran
-    const rhythmScore = totalNotes > 0 ? Math.round(((perfectCount * 1.0 + goodCount * 0.8 + earlyLateCount * 0.5) / totalNotes) * 100) : 0;
+    // La nota de resolución no tiene evaluación rítmica: no entra en el puntaje de ritmo
+    const timedNotes = generatedExercise.filter(n => !n.isRest && !n.isResolution).length;
+    const rhythmScore = timedNotes > 0 ? Math.round(((perfectCount * 1.0 + goodCount * 0.8 + earlyLateCount * 0.5) / timedNotes) * 100) : 0;
 
     document.getElementById('totalNotesScore').textContent = totalNotes;
     document.getElementById('hitsScore').textContent = hits;

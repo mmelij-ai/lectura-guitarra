@@ -49,21 +49,20 @@ body {
     }
 }
 
-/* Contenedor del Pentagrama SVG Estilo index(8) Adaptativo y Proporcional */
+/* Contenedor del Pentagrama: viewport con scroll horizontal; el alto lo fija JS según la escala */
 .staff-wrapper {
-    background-color: #f8fafc; /* Slate 50 */
+    background-color: #ffffff;
     border-radius: 20px;
     padding: 0px !important;
-    margin-bottom: 24px;
+    margin: 0 auto 24px auto;
     border: 4px solid #1e293b;
-    box-shadow: inset 0 2px 12px rgba(0,0,0,0.15);
     position: relative;
     overflow: hidden;
-    display: inline-flex;
-    justify-content: center;
+    display: block;
     width: 100%;
-    max-width: 880px; 
-    aspect-ratio: 820 / 150; /* Aspect ratio fijo para escalamiento perfecto */
+    max-width: 880px;
+    height: 150px;
+    box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
@@ -71,6 +70,53 @@ body {
         border-width: 6px;
     }
 }
+
+.staff-scroller {
+    position: absolute;
+    inset: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+.staff-scroller::-webkit-scrollbar { display: none; }
+
+.staff-inner {
+    position: relative;
+    height: 100%;
+}
+
+/* Clave + compás fijos mientras la partitura se desplaza */
+.staff-clef {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: #ffffff;
+    z-index: 6;
+    pointer-events: none;
+}
+.staff-wrapper.is-scrolled .staff-clef {
+    box-shadow: 6px 0 8px -6px rgba(15, 23, 42, 0.35);
+}
+
+/* Mini-barra de progreso por compases */
+.bar-progress {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 6px;
+    display: flex;
+    z-index: 7;
+}
+.bar-seg {
+    flex: 1;
+    background: #e2e8f0;
+    border-right: 1px solid #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.bar-seg:last-child { border-right: none; }
+.bar-seg:hover { background: #cbd5e1; }
+.bar-seg.active { background: #06b6d4; }
 
 /* Cuenta Regresiva Overlay */
 #countdownOverlay {

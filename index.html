@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="vendor/tailwind.css">
     <script src="vendor/vexflow.js"></script>
     <script src="vendor/Tone.js"></script>
-    <link rel="stylesheet" href="css/style.css?v=8">
+    <link rel="stylesheet" href="css/style.css?v=9">
     <!-- Icono inline para evitar el error 404 de favicon.ico en la consola -->
     <link rel="icon" href="data:,">
 </head>
@@ -294,11 +294,20 @@
         </div>
 
         <!-- Pentagrama e indicador de tiempo (VexFlow SVG Ampliado de 880px) -->
-        <div class="staff-wrapper relative">
-            <div id="staffSVG" class="w-full bg-white rounded-lg"></div>
-            <!-- Playhead absoluto acelerado por CSS -->
-            <div id="playhead" class="absolute top-0 bottom-0 w-[3px] bg-amber-500 shadow-[0_0_8px_#f59e0b] z-20 hidden pointer-events-none"></div>
-            
+        <div class="staff-wrapper relative" id="staffWrapper">
+            <!-- Zona desplazable: partitura a tamaño legible; sigue la reproducción -->
+            <div id="staffScroller" class="staff-scroller">
+                <div id="staffInner" class="staff-inner">
+                    <div id="staffSVG"></div>
+                    <!-- Playhead absoluto acelerado por CSS -->
+                    <div id="playhead" class="absolute top-0 bottom-0 w-[3px] bg-amber-500 shadow-[0_0_8px_#f59e0b] z-20 hidden pointer-events-none"></div>
+                </div>
+            </div>
+            <!-- Clave y compás fijos a la izquierda -->
+            <div id="staffClef" class="staff-clef"></div>
+            <!-- Progreso por compases (tocar un segmento lleva a ese compás) -->
+            <div id="barProgress" class="bar-progress"></div>
+
             <!-- CONTENEDOR: Retroalimentación Rítmica Flotante Arcade -->
             <div id="rhythmFeedback" class="absolute top-4 left-1/2 transform -translate-x-1/2 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all duration-300 opacity-0 pointer-events-none z-30 px-3 sm:px-4 py-1 sm:py-1.5 bg-slate-950/95 border border-cyan-500/40 shadow-[0_0_15px_rgba(34,211,238,0.25)] rounded-full text-cyan-400 animate-bounce"></div>
             
@@ -475,8 +484,8 @@
 <script src="js/theory.js?v=2"></script>
 <script src="js/audio.js"></script>
 <script src="js/fretboard.js?v=12"></script>
-<script src="js/score.js?v=3"></script>
-<script src="js/game.js?v=5"></script>
+<script src="js/score.js?v=4"></script>
+<script src="js/game.js?v=6"></script>
 <script src="js/ui.js?v=3"></script>
 
 </body>
